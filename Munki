@@ -280,7 +280,7 @@ loadAgeBtn.Font = Enum.Font.FredokaOne
 loadAgeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 loadAgeBtn.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/CZGetsIt/AllLuas/refs/heads/main/EggHatcherSource"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/kukurikapu08/LUAs/refs/heads/main/Munki2nd"))()
 end)
 
 -- 👤 Credit
