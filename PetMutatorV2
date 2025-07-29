@@ -1,0 +1,367 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Mutation definitions
+local mutationData = {
+    Golden     = { Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0) },
+    Shiny      = { Prefix = "Shiny ", Color = Color3.fromRGB(255, 255, 255) },
+    Rainbow    = { Prefix = "Rainbow ", Color = Color3.fromRGB(255, 0, 255) },
+    Mega       = { Prefix = "Mega ", Color = Color3.fromRGB(255, 100, 100) },
+    Tiny       = { Prefix = "Tiny ", Color = Color3.fromRGB(150, 150, 150) },
+    Tranquil   = { Prefix = "Tranquil ", Color = Color3.fromRGB(100, 200, 255) },
+    Corrupted  = { Prefix = "Corrupted ", Color = Color3.fromRGB(80, 0, 120) },
+    -- Inverted removed here
+    Frozen     = { Prefix = "Frozen ", Color = Color3.fromRGB(150, 200, 255) },
+    Windy      = { Prefix = "Windy ", Color = Color3.fromRGB(170, 255, 200) },
+    IronSkin   = { Prefix = "IronSkin ", Color = Color3.fromRGB(120, 120, 120) },
+    Radiant    = { Prefix = "Radiant ", Color = Color3.fromRGB(255, 255, 0) },
+    Shocked    = { Prefix = "Shocked ", Color = Color3.fromRGB(255, 255, 150) },
+    Ascended   = { Prefix = "Ascended ", Color = Color3.fromRGB(255, 255, 255) },
+}
+
+local selected = nil
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "PetMutatorUI"
+screenGui.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 320, 0, 380)
+mainFrame.Position = UDim2.new(0.5, -160, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.Active = true
+mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "Bacon Scripts\nPET MUTATOR"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+
+-- Dropdown Button
+local dropdownButton = Instance.new("TextButton", mainFrame)
+dropdownButton.Size = UDim2.new(1, -20, 0, 30)
+dropdownButton.Position = UDim2.new(0, 10, 0, 60)
+dropdownButton.Text = "Select Mutation ▼"
+dropdownButton.Font = Enum.Font.SourceSansBold
+dropdownButton.TextSize = 18
+dropdownButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+dropdownButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- Dropdown Frame (initially hidden)
+local dropdownFrame = Instance.new("Frame", mainFrame)
+dropdownFrame.Size = UDim2.new(1, -20, 0, 150)
+dropdownFrame.Position = UDim2.new(0, 10, 0, 100)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dropdownFrame.Visible = false
+dropdownFrame.BorderSizePixel = 0
+Instance.new("UICorner", dropdownFrame).CornerRadius = UDim.new(0, 6)
+
+-- Scroll frame inside dropdown for mutations
+local scrollFrame = Instance.new("ScrollingFrame", dropdownFrame)
+scrollFrame.Size = UDim2.new(1, 0, 1, 0)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- will update dynamically
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 6
+
+local uiList = Instance.new("UIListLayout", scrollFrame)
+uiList.Padding = UDim.new(0, 4)
+
+-- Populate dropdown with mutation buttons
+local function updateCanvasSize()
+    local listLayout = uiList
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
+end
+
+for name, _ in pairs(mutationData) do
+    local btn = Instance.new("TextButton", scrollFrame)
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 16
+    btn.Text = name
+
+    btn.MouseButton1Click:Connect(function()
+        selected = name
+        dropdownButton.Text = "Selected: " .. name .. " ▼"
+        dropdownFrame.Visible = false
+    end)
+end
+
+-- Update scroll canvas size after buttons added
+updateCanvasSize()
+
+-- Toggle dropdown on button click
+dropdownButton.MouseButton1Click:Connect(function()
+    dropdownFrame.Visible = not dropdownFrame.Visible
+end)
+
+-- Mutate button
+local mutateButton = Instance.new("TextButton", mainFrame)
+mutateButton.Size = UDim2.new(1, -20, 0, 40)
+mutateButton.Position = UDim2.new(0, 10, 1, -70)
+mutateButton.Text = "Click to Mutate Pet"
+mutateButton.Font = Enum.Font.SourceSansBold
+mutateButton.TextSize = 18
+mutateButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+mutateButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- Status label
+local statusLabel = Instance.new("TextLabel", mainFrame)
+statusLabel.Size = UDim2.new(1, -20, 0, 30)
+statusLabel.Position = UDim2.new(0, 10, 1, -30)
+statusLabel.Text = "Status: Waiting..."
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 16
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
+statusLabel.BackgroundTransparency = 1
+
+-- Pet detection function
+local function getHeldPet()
+    local char = player.Character
+    if not char then return nil end
+
+    -- Check for Tool
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            return tool
+        end
+    end
+
+    -- Check nearby Models (within 10 studs)
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") then
+            if obj:FindFirstChild(player.Name) or obj.Name:lower():find("bee") then
+                local part = obj:FindFirstChildWhichIsA("BasePart")
+                if (part.Position - char.PrimaryPart.Position).Magnitude < 10 then
+                    return obj
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+-- Clear old mutation effects on pet
+local function clearEffects(pet)
+    for _, part in pairs(pet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 0
+            part.Material = Enum.Material.Plastic
+            part.Reflectance = 0
+            -- Remove lights & particles
+            for _, child in pairs(part:GetChildren()) do
+                if child:IsA("PointLight") or child:IsA("ParticleEmitter") then
+                    child:Destroy()
+                end
+            end
+            -- Reset size for mutateable parts
+            -- Note: you might want to store original sizes somewhere if pets vary
+            -- Here we won't modify size on clear (except Tiny/Mega mutation will do scaling)
+        end
+    end
+end
+
+-- Apply visual mutation effects to pet
+local function applyMutationVisual(pet, mutation)
+    clearEffects(pet)
+
+    for _, part in pairs(pet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            if mutation == "Golden" then
+                part.Color = Color3.fromRGB(255, 215, 0)
+                part.Material = Enum.Material.Metal
+                part.Reflectance = 0.4
+            elseif mutation == "Shiny" then
+                part.Color = Color3.fromRGB(255, 255, 255)
+                part.Material = Enum.Material.Neon
+                -- Add glow using PointLight
+                if not part:FindFirstChildOfClass("PointLight") then
+                    local light = Instance.new("PointLight")
+                    light.Range = 8
+                    light.Brightness = 4
+                    light.Color = part.Color
+                    light.Parent = part
+                end
+            elseif mutation == "Frozen" then
+                part.Color = Color3.fromRGB(150, 200, 255)
+                part.Material = Enum.Material.Glass
+                part.Transparency = 0.3
+            elseif mutation == "Windy" then
+                part.Color = Color3.fromRGB(170, 255, 200)
+                part.Material = Enum.Material.SmoothPlastic
+                part.Transparency = 0.2
+                -- Optional: add subtle particle effect for wind here
+            elseif mutation == "Mega" then
+                part.Color = Color3.fromRGB(130, 130, 130)
+                part.Material = Enum.Material.Metal
+                -- Scale size up by 1.5 for mega
+                part.Size = part.Size * 1.5
+            elseif mutation == "Tiny" then
+                part.Color = Color3.fromRGB(150, 150, 150)
+                part.Material = Enum.Material.SmoothPlastic
+                -- Scale size down by 0.5 for tiny
+                part.Size = part.Size * 0.5
+            elseif mutation == "Tranquil" then
+                part.Color = Color3.fromRGB(100, 200, 255)
+                part.Material = Enum.Material.Neon
+                part.Transparency = 0.1
+                if not part:FindFirstChildOfClass("PointLight") then
+                    local light = Instance.new("PointLight")
+                    light.Range = 5
+                    light.Brightness = 2
+                    light.Color = part.Color
+                    light.Parent = part
+                end
+            elseif mutation == "Corrupted" then
+                part.Color = Color3.fromRGB(120, 0, 40)
+                part.Material = Enum.Material.Metal
+                -- Corrupted aura particle
+                if not part:FindFirstChild("CorruptedParticles") then
+                    local p = Instance.new("ParticleEmitter")
+                    p.Name = "CorruptedParticles"
+                    p.Texture = "rbxassetid://243660364"
+                    p.Color = ColorSequence.new(Color3.fromRGB(120, 0, 40))
+                    p.Rate = 5
+                    p.Lifetime = NumberRange.new(1)
+                    p.Speed = NumberRange.new(0.5)
+                    p.Parent = part
+                end
+            elseif mutation == "IronSkin" then
+                part.Color = Color3.fromRGB(120, 120, 120)
+                part.Material = Enum.Material.Metal
+                part.Reflectance = 0.3
+                if not part:FindFirstChildOfClass("PointLight") then
+                    local light = Instance.new("PointLight")
+                    light.Range = 6
+                    light.Brightness = 1.5
+                    light.Color = part.Color
+                    light.Parent = part
+                end
+            elseif mutation == "Radiant" then
+                part.Color = Color3.fromRGB(255, 255, 0)
+                part.Material = Enum.Material.Neon
+                if not part:FindFirstChild("RadiantLight") then
+                    local p = Instance.new("ParticleEmitter")
+                    p.Name = "RadiantLight"
+                    p.Texture = "rbxassetid://243660364"
+                    p.Color = ColorSequence.new(Color3.new(1,1,0))
+                    p.Rate = 15
+                    p.Lifetime = NumberRange.new(0.5)
+                    p.Speed = NumberRange.new(1)
+                    p.Parent = part
+                end
+            elseif mutation == "Rainbow" then
+                part.Color = Color3.fromRGB(255, 255, 255)
+                part.Material = Enum.Material.Neon
+                if not part:FindFirstChild("RainbowParticles") then
+                    local p = Instance.new("ParticleEmitter")
+                    p.Name = "RainbowParticles"
+                    p.Texture = "rbxassetid://241594314"
+                    p.Rate = 20
+                    p.Lifetime = NumberRange.new(1)
+                    p.Speed = NumberRange.new(1)
+                    p.Color = ColorSequence.new{
+                        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+                        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,165,0)),
+                        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255,255,0)),
+                        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,0)),
+                        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)),
+                        ColorSequenceKeypoint.new(1, Color3.fromRGB(75,0,130))
+                    }
+                    p.Parent = part
+                end
+            elseif mutation == "Shocked" then
+                part.Color = Color3.fromRGB(255, 255, 150)
+                part.Material = Enum.Material.Neon
+                if not part:FindFirstChild("ShockParticles") then
+                    local p = Instance.new("ParticleEmitter")
+                    p.Name = "ShockParticles"
+                    p.Texture = "rbxassetid://241594314"
+                    p.Rate = 15
+                    p.Lifetime = NumberRange.new(0.5)
+                    p.Speed = NumberRange.new(1)
+                    p.Color = ColorSequence.new(Color3.fromRGB(255, 255, 150))
+                    p.Parent = part
+                end
+            elseif mutation == "Ascended" then
+                part.Color = Color3.fromRGB(255, 255, 255)
+                part.Material = Enum.Material.Neon
+                part.Transparency = 0.1
+                if not part:FindFirstChildOfClass("PointLight") then
+                    local light = Instance.new("PointLight")
+                    light.Range = 10
+                    light.Brightness = 3
+                    light.Color = part.Color
+                    light.Parent = part
+                end
+                if not part:FindFirstChild("AscendedParticles") then
+                    local p = Instance.new("ParticleEmitter")
+                    p.Name = "AscendedParticles"
+                    p.Texture = "rbxassetid://241594314"
+                    p.Rate = 30
+                    p.Lifetime = NumberRange.new(1)
+                    p.Speed = NumberRange.new(2)
+                    p.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+                    p.Parent = part
+                end
+            end
+        end
+    end
+end
+
+-- Mutate button logic
+mutateButton.MouseButton1Click:Connect(function()
+    if not selected then
+        statusLabel.Text = "Status: Please select a mutation first."
+        return
+    end
+
+    local pet = getHeldPet()
+    if not pet then
+        statusLabel.Text = "Status: No pet found in hand or nearby."
+        return
+    end
+
+    statusLabel.Text = "Status: Applying mutation: " .. selected .. "..."
+
+    -- Play some particle effect on pet root part (if exists)
+    local rootPart = pet:FindFirstChildWhichIsA("BasePart")
+    if rootPart then
+        local sparkle = Instance.new("ParticleEmitter")
+        sparkle.Texture = "rbxassetid://243660364"
+        sparkle.Rate = 50
+        sparkle.Lifetime = NumberRange.new(0.5)
+        sparkle.Speed = NumberRange.new(2)
+        sparkle.Color = ColorSequence.new(mutationData[selected].Color)
+        sparkle.Parent = rootPart
+
+        delay(1, function()
+            sparkle.Enabled = false
+            wait(1)
+            sparkle:Destroy()
+        end)
+    end
+
+    -- Apply mutation visuals
+    applyMutationVisual(pet, selected)
+
+    -- Update pet name
+    if pet:FindFirstChild("NameTag") then
+        pet.NameTag.Text = mutationData[selected].Prefix .. pet.Name
+    elseif pet:IsA("Tool") then
+        pet.Name = mutationData[selected].Prefix .. pet.Name
+    elseif pet:IsA("Model") then
+        pet.Name = mutationData[selected].Prefix .. pet.Name
+    end
+
+    statusLabel.Text = "Status: Mutation applied successfully!"
+end)
