@@ -1,4 +1,4 @@
--- Pet Mutator V3 - Optimized and Scroll Fixed
+-- Pet Mutator V3 - Optimized and Scroll Fixed for All Pets
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -105,7 +105,7 @@ end)
 
 for name, _ in pairs(mutationData) do
 	local btn = Instance.new("TextButton", scrollFrame)
-	btn.Size = UDim2.new(1, 0, 0, 24)
+	btn.Size = UDim2.new(1, -4, 0, 24)
 	btn.Text = name
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 16
@@ -149,11 +149,11 @@ local function addParticleEffect(pet, mutation)
 end
 
 local function scaleModel(pet, factor)
-	for _, part in ipairs(pet:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Size *= factor
-		elseif part:IsA("SpecialMesh") then
-			part.Scale *= factor
+	for _, obj in ipairs(pet:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			obj.Size *= factor
+		elseif obj:IsA("SpecialMesh") then
+			obj.Scale *= factor
 		end
 	end
 end
@@ -174,6 +174,8 @@ local function applyStoredMutation(pet)
 	end
 	if mutation == "Mega" then
 		scaleModel(pet, 1.5)
+	elseif mutation == "Tiny" then
+		scaleModel(pet, 0.65)
 	end
 	addParticleEffect(pet, mutation)
 end
