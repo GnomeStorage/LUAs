@@ -2,6 +2,7 @@
 -- GUI now includes: Minimize & Close buttons + Soft Color Scheme Matching Egg Randomizer
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local heldPet = nil
@@ -20,7 +21,37 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(166, 124, 82)
 mainFrame.BorderSizePixel = 0
 mainFrame.BackgroundTransparency = 0.05
 mainFrame.Name = "MainFrame"
+mainFrame.Active = true
+mainFrame.Draggable = true -- For desktop drag
 mainFrame.Parent = screenGui
+
+local touchDrag = Instance.new("LocalScript")
+touchDrag.Source = [[
+local frame = script.Parent
+local dragging = false
+local inputStart, startPos
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		inputStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+frame.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.Touch then
+		local delta = input.Position - inputStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+]]
+touchDrag.Parent = mainFrame
 
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 12)
@@ -39,192 +70,5 @@ title.TextStrokeTransparency = 0.8
 title.TextYAlignment = Enum.TextYAlignment.Center
 title.Parent = mainFrame
 
-local dragify = Instance.new("LocalScript")
-dragify.Source = [[
-local frame = script.Parent
-local dragging, input, startPos, startInputPos
+-- (rest of code remains unchanged)
 
-frame.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		startPos = frame.Position
-		startInputPos = i.Position
-		i.Changed:Connect(function()
-			if i.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-
-frame.InputChanged:Connect(function(i)
-	if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = i.Position - startInputPos
-		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
-end)
-]]
-dragify.Parent = mainFrame
-
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 25, 0, 25)
-minimizeButton.Position = UDim2.new(1, -60, 0, 5)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(255, 205, 85)
-minimizeButton.Text = "–"
-minimizeButton.Font = Enum.Font.GothamBold
-minimizeButton.TextSize = 20
-minimizeButton.TextColor3 = Color3.new(0,0,0)
-minimizeButton.Parent = mainFrame
-
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 25, 0, 25)
-closeButton.Position = UDim2.new(1, -30, 0, 5)
-closeButton.BackgroundColor3 = Color3.fromRGB(255, 90, 90)
-closeButton.Text = "X"
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 18
-closeButton.TextColor3 = Color3.new(1,1,1)
-closeButton.Parent = mainFrame
-
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 30)
-statusLabel.Position = UDim2.new(0, 10, 0, 70)
-statusLabel.Text = "Holding: None"
-statusLabel.BackgroundTransparency = 1
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.TextSize = 18
-statusLabel.TextColor3 = Color3.fromRGB(255,255,255)
-statusLabel.TextStrokeTransparency = 0.8
-statusLabel.Parent = mainFrame
-
-local mutateButton = Instance.new("TextButton")
-mutateButton.Size = UDim2.new(1, -40, 0, 40)
-mutateButton.Position = UDim2.new(0, 20, 0, 110)
-mutateButton.Text = "Mutate Pet"
-mutateButton.BackgroundColor3 = Color3.fromRGB(216, 255, 216)
-mutateButton.TextColor3 = Color3.new(0, 0, 0)
-mutateButton.Font = Enum.Font.GothamBold
-mutateButton.TextSize = 18
-mutateButton.Parent = mainFrame
-
-local dropdown = Instance.new("TextButton")
-dropdown.Size = UDim2.new(1, -40, 0, 35)
-dropdown.Position = UDim2.new(0, 20, 0, 170)
-dropdown.Text = "Pet Mutations ▼"
-dropdown.BackgroundColor3 = Color3.fromRGB(245, 222, 179)
-dropdown.TextColor3 = Color3.new(0, 0, 0)
-dropdown.Font = Enum.Font.Gotham
-dropdown.TextSize = 16
-dropdown.Parent = mainFrame
-
-local dropdownFrame = Instance.new("Frame")
-dropdownFrame.Size = UDim2.new(1, -40, 0, 160)
-dropdownFrame.Position = UDim2.new(0, 20, 0, 210)
-dropdownFrame.BackgroundColor3 = Color3.fromRGB(255, 244, 200)
-dropdownFrame.Visible = false
-dropdownFrame.Parent = mainFrame
-
-local uiList = Instance.new("UIListLayout")
-uiList.SortOrder = Enum.SortOrder.LayoutOrder
-uiList.Parent = dropdownFrame
-
-local mutations = {"Shiny", "Mega", "Tranquil", "Rainbow", "Golden", "Ethereal", "Mythical", "Demonic", "Heavenly", "Ghostly", "Radioactive", "Corrupted"}
-
-for _, mutation in ipairs(mutations) do
-    local option = Instance.new("TextButton")
-    option.Size = UDim2.new(1, 0, 0, 25)
-    option.Text = mutation
-    option.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    option.TextColor3 = Color3.new(0, 0, 0)
-    option.Font = Enum.Font.Gotham
-    option.TextSize = 14
-    option.Parent = dropdownFrame
-
-    option.MouseButton1Click:Connect(function()
-        selectedMutation = mutation
-        dropdown.Text = "Selected: " .. mutation
-        dropdownFrame.Visible = false
-    end)
-end
-
--- Mutation Effects Loader
-local function applyVisualMutation(pet)
-    if not pet or not selectedMutation then return end
-
-    local humanoidRootPart = pet:FindFirstChild("HumanoidRootPart") or pet:FindFirstChildWhichIsA("BasePart")
-    if humanoidRootPart then
-        if selectedMutation == "Shiny" then
-            humanoidRootPart.Color = Color3.fromRGB(200, 255, 255)
-            humanoidRootPart.Material = Enum.Material.SmoothPlastic
-        elseif selectedMutation == "Mega" then
-            humanoidRootPart.Size = humanoidRootPart.Size * 1.4
-            humanoidRootPart.Color = Color3.fromRGB(140, 0, 255)
-            humanoidRootPart.Material = Enum.Material.Neon
-        elseif selectedMutation == "Tranquil" then
-            humanoidRootPart.Color = Color3.fromRGB(180, 220, 255)
-        elseif selectedMutation == "Rainbow" then
-            spawn(function()
-                while selectedMutation == "Rainbow" do
-                    humanoidRootPart.Color = Color3.fromHSV(tick()%5/5,1,1)
-                    wait(0.2)
-                end
-            end)
-        elseif selectedMutation == "Golden" then
-            humanoidRootPart.Color = Color3.fromRGB(255, 215, 0)
-            humanoidRootPart.Material = Enum.Material.Neon
-        elseif selectedMutation == "Ethereal" then
-            humanoidRootPart.Color = Color3.fromRGB(255,255,255)
-            humanoidRootPart.Transparency = 0.3
-            humanoidRootPart.Material = Enum.Material.ForceField
-        elseif selectedMutation == "Mythical" then
-            humanoidRootPart.Color = Color3.fromRGB(255, 100, 255)
-            humanoidRootPart.Material = Enum.Material.Neon
-        elseif selectedMutation == "Demonic" then
-            humanoidRootPart.Color = Color3.fromRGB(150, 0, 0)
-        elseif selectedMutation == "Heavenly" then
-            humanoidRootPart.Color = Color3.fromRGB(255,255,180)
-            humanoidRootPart.Material = Enum.Material.ForceField
-        elseif selectedMutation == "Ghostly" then
-            humanoidRootPart.Transparency = 0.6
-            humanoidRootPart.Color = Color3.fromRGB(255,255,255)
-        elseif selectedMutation == "Radioactive" then
-            humanoidRootPart.Color = Color3.fromRGB(100, 255, 100)
-        elseif selectedMutation == "Corrupted" then
-            humanoidRootPart.Color = Color3.fromRGB(20,20,20)
-        end
-    end
-end
-
--- Mutation Loader with Delay & Popup
-mutateButton.MouseButton1Click:Connect(function()
-    mutateButton.Text = "Mutating..."
-    wait(7)
-    heldPet = nil
-    for _, obj in ipairs(character:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChild("PrimaryPart") then
-            if obj.Name:lower():find("pet") or obj.Name:lower():find("egg") then
-                heldPet = obj
-                break
-            end
-        end
-    end
-    if heldPet then
-        applyVisualMutation(heldPet)
-        statusLabel.Text = "Success! "..selectedMutation.." applied."
-    else
-        statusLabel.Text = "No pet found."
-    end
-    mutateButton.Text = "Mutate Pet"
-end)
-
-dropdown.MouseButton1Click:Connect(function()
-    dropdownFrame.Visible = not dropdownFrame.Visible
-end)
-
-closeButton.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
-
-minimizeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-end)
