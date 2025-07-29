@@ -1,14 +1,12 @@
 --// Setup GUI
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "PetMutatorUI"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 300, 0, 220)
+mainFrame.Size = UDim2.new(0, 300, 0, 230)
 mainFrame.Position = UDim2.new(0.5, -150, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mainFrame.Active = true
@@ -25,9 +23,18 @@ title.TextSize = 20
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
 
+local mutateButton = Instance.new("TextButton", mainFrame)
+mutateButton.Size = UDim2.new(1, -20, 0, 30)
+mutateButton.Position = UDim2.new(0, 10, 0, 60)
+mutateButton.Text = "Click to Mutate Pet"
+mutateButton.Font = Enum.Font.SourceSansBold
+mutateButton.TextSize = 18
+mutateButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+mutateButton.TextColor3 = Color3.new(1, 1, 1)
+
 local dropdown = Instance.new("TextButton", mainFrame)
 dropdown.Size = UDim2.new(1, -20, 0, 30)
-dropdown.Position = UDim2.new(0, 10, 0, 60)
+dropdown.Position = UDim2.new(0, 10, 0, 100)
 dropdown.Text = "Select Mutation"
 dropdown.Font = Enum.Font.SourceSans
 dropdown.TextSize = 18
@@ -36,7 +43,7 @@ dropdown.TextColor3 = Color3.new(1, 1, 1)
 
 local optionsFrame = Instance.new("Frame", mainFrame)
 optionsFrame.Size = UDim2.new(1, -20, 0, 120)
-optionsFrame.Position = UDim2.new(0, 10, 0, 95)
+optionsFrame.Position = UDim2.new(0, 10, 0, 135)
 optionsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 optionsFrame.Visible = false
 optionsFrame.ClipsDescendants = true
@@ -45,18 +52,9 @@ local uiList = Instance.new("UIListLayout", optionsFrame)
 uiList.FillDirection = Enum.FillDirection.Vertical
 uiList.Padding = UDim.new(0, 2)
 
-local mutateButton = Instance.new("TextButton", mainFrame)
-mutateButton.Size = UDim2.new(1, -20, 0, 30)
-mutateButton.Position = UDim2.new(0, 10, 0, 170)
-mutateButton.Text = "Click to Mutate Pet"
-mutateButton.Font = Enum.Font.SourceSansBold
-mutateButton.TextSize = 18
-mutateButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
-mutateButton.TextColor3 = Color3.new(1, 1, 1)
-
 local status = Instance.new("TextLabel", mainFrame)
 status.Size = UDim2.new(1, -20, 0, 20)
-status.Position = UDim2.new(0, 10, 0, 200)
+status.Position = UDim2.new(0, 10, 0, 210)
 status.Text = "Status: Waiting..."
 status.Font = Enum.Font.SourceSans
 status.TextSize = 16
@@ -104,13 +102,15 @@ for mutName, mutData in pairs(mutationMap) do
 	end)
 end
 
---// Get Held Pet
+--// Get Held Pet (Improved)
 local function getHeldPet()
 	local char = player.Character
 	if not char then return nil end
 	for _, obj in pairs(char:GetChildren()) do
-		if obj:IsA("Model") and obj:FindFirstChild("PetTag") then
-			return obj
+		if obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") then
+			if obj:FindFirstChild("PetTag") or obj.Name:lower():find("bee") or obj.Name:lower():find("raccoon") then
+				return obj
+			end
 		end
 	end
 	return nil
@@ -134,7 +134,9 @@ mutateButton.MouseButton1Click:Connect(function()
 		return
 	end
 
-	pet.Name = data.Prefix .. (pet.Name:gsub("^%w+ ", ""))
+	-- Rename without double prefixing
+	local baseName = pet.Name:gsub("^%w+ ", "")
+	pet.Name = data.Prefix .. baseName
 
 	for _, part in ipairs(pet:GetDescendants()) do
 		if part:IsA("BasePart") then
