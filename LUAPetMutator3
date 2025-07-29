@@ -1,274 +1,142 @@
---!strict
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Pet Mutator Script for Grow A Garden (with debug & dropdown toggle)
+
 local Players = game:GetService("Players")
+local Replicated = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-local petModelsFolder = ReplicatedStorage:WaitForChild("Pets")
+print("[PetMutator] Script started")
 
--- Mutation data from Grow a Garden wiki
-local Mutations = {
-    ["Shiny"] = function(pet)
-        -- simple example: increase brightness/gloss
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Neon
-                part.Color = Color3.fromRGB(255, 255, 255)
-                part.Transparency = 0
-            end
-            if part:IsA("ParticleEmitter") or part:IsA("Light") then
-                part.Enabled = true
-            end
-        end
-    end,
-    ["Frozen"] = function(pet)
-        -- make pet icy blue and semi-transparent
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Ice
-                part.Color = Color3.fromRGB(150, 200, 255)
-                part.Transparency = 0.3
-            end
-        end
-    end,
-    ["Windy"] = function(pet)
-        -- add some particle effects for wind (if none, just color change)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.SmoothPlastic
-                part.Color = Color3.fromRGB(180, 220, 255)
-                part.Transparency = 0
-            end
-        end
-        -- optionally add a particle emitter (if you want, add here)
-    end,
-    ["Golden"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Metal
-                part.Color = Color3.fromRGB(255, 215, 0)
-                part.Transparency = 0
-            end
-        end
-    end,
-    ["Mega"] = function(pet)
-        -- scale pet bigger
-        pet:SetPrimaryPartCFrame(pet.PrimaryPart.CFrame)
-        pet.PrimaryPart.Size = pet.PrimaryPart.Size * 1.5
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Size = part.Size * 1.5
-            end
-        end
-    end,
-    ["Tiny"] = function(pet)
-        -- scale pet smaller
-        pet:SetPrimaryPartCFrame(pet.PrimaryPart.CFrame)
-        pet.PrimaryPart.Size = pet.PrimaryPart.Size * 0.5
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Size = part.Size * 0.5
-            end
-        end
-    end,
-    ["Tranquil"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Glass
-                part.Transparency = 0.5
-                part.Color = Color3.fromRGB(100, 200, 255)
-            end
-        end
-    end,
-    ["Corrupted"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Slate
-                part.Color = Color3.fromRGB(120, 30, 30)
-                part.Transparency = 0.2
-            end
-        end
-    end,
-    ["IronSkin"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Metal
-                part.Color = Color3.fromRGB(90, 90, 90)
-                part.Transparency = 0
-            end
-        end
-    end,
-    ["Radiant"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Neon
-                part.Color = Color3.fromRGB(255, 140, 0)
-                part.Transparency = 0
-            end
-        end
-    end,
-    ["Rainbow"] = function(pet)
-        local colors = {
-            Color3.fromRGB(255, 0, 0),
-            Color3.fromRGB(255, 127, 0),
-            Color3.fromRGB(255, 255, 0),
-            Color3.fromRGB(0, 255, 0),
-            Color3.fromRGB(0, 0, 255),
-            Color3.fromRGB(75, 0, 130),
-            Color3.fromRGB(148, 0, 211)
-        }
-        local index = 1
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Neon
-                part.Color = colors[index]
-                index = index + 1
-                if index > #colors then
-                    index = 1
-                end
-            end
-        end
-    end,
-    ["Shocked"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Neon
-                part.Color = Color3.fromRGB(255, 255, 255)
-                part.Transparency = 0
-            end
-        end
-        -- optionally add sparks particles or light effects here
-    end,
-    ["Ascended"] = function(pet)
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.ForceField
-                part.Transparency = 0.1
-                part.Color = Color3.fromRGB(255, 255, 255)
-            end
-        end
-    end,
+-- Wait for PlayerGui safely
+local playerGui = player:WaitForChild("PlayerGui", 10)
+if not playerGui then
+    warn("[PetMutator] PlayerGui not found. Cannot create UI.")
+    return
+end
+
+-- Gather all pet model names (lowercase)
+local petModels = {}
+if Replicated:FindFirstChild("Pets") then
+    for _, mdl in ipairs(Replicated.Pets:GetChildren()) do
+        petModels[mdl.Name:lower()] = true
+    end
+end
+print("[PetMutator] Found " .. tostring(#(table.keys or function(t) local count=0 for _ in pairs(t) do count=count+1 end return count end)(petModels)) .. " pet models")
+
+-- Mutation data (color, material, special effects)
+local mutationData = {
+    Golden = {Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0), Material = Enum.Material.SmoothPlastic},
+    Shiny = {Prefix = "Shiny ", Color = Color3.fromRGB(240, 240, 240), Material = Enum.Material.Neon},
+    Rainbow = {Prefix = "Rainbow ", Color = Color3.new(1,1,1), Material = Enum.Material.Neon},
+    Mega = {Prefix = "Mega ", Color = Color3.fromRGB(200,200,200), Material = Enum.Material.Metal},
+    Tiny = {Prefix = "Tiny ", Color = Color3.fromRGB(100,100,100), Material = Enum.Material.SmoothPlastic},
+    Tranquil = {Prefix = "Tranquil ", Color = Color3.fromRGB(80, 210, 255), Material = Enum.Material.Neon},
+    Corrupted = {Prefix = "Corrupted ", Color = Color3.fromRGB(150, 0, 0), Material = Enum.Material.Slate},
+    Frozen = {Prefix = "Frozen ", Color = Color3.fromRGB(180, 240, 255), Material = Enum.Material.Ice},
+    Windy = {Prefix = "Windy ", Color = Color3.fromRGB(200, 255, 255), Material = Enum.Material.ForceField},
+    IronSkin = {Prefix = "IronSkin ", Color = Color3.fromRGB(125, 125, 125), Material = Enum.Material.Metal},
+    Radiant = {Prefix = "Radiant ", Color = Color3.fromRGB(255, 180, 0), Material = Enum.Material.Neon},
+    Shocked = {Prefix = "Shocked ", Color = Color3.fromRGB(255, 255, 255), Material = Enum.Material.Neon},
+    Ascended = {Prefix = "Ascended ", Color = Color3.fromRGB(255, 255, 255), Material = Enum.Material.Neon},
 }
 
--- Remove "Inverted" because colors vary and are complex
-local mutationNames = {}
-for name, _ in pairs(Mutations) do
-    table.insert(mutationNames, name)
+local mutationList = {}
+for mutName in pairs(mutationData) do
+    table.insert(mutationList, mutName)
 end
-table.sort(mutationNames)
+table.sort(mutationList)
 
--- UI setup
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "PetMutatorUI"
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+-- Create UI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PetMutatorUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 220)
-MainFrame.Position = UDim2.new(0.5, -150, 0.3, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 320, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -160, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.Active = true
+mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,8)
 
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 35)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Bacon Scripts\nPET MUTATOR"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.TextSize = 18
-TitleLabel.Parent = MainFrame
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "Bacon Scripts\nPET MUTATOR"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
 
--- Dropdown Button
-local dropdownOpen = false
-local SelectedMutation = mutationNames[1] or "None"
+local mutateButton = Instance.new("TextButton", mainFrame)
+mutateButton.Size = UDim2.new(1, -20, 0, 30)
+mutateButton.Position = UDim2.new(0, 10, 0, 60)
+mutateButton.Text = "Click to Mutate Pet"
+mutateButton.Font = Enum.Font.SourceSansBold
+mutateButton.TextSize = 18
+mutateButton.BackgroundColor3 = Color3.fromRGB(90,90,90)
+mutateButton.TextColor3 = Color3.new(1,1,1)
 
-local DropdownButton = Instance.new("TextButton")
-DropdownButton.Size = UDim2.new(1, 0, 0, 30)
-DropdownButton.Position = UDim2.new(0, 0, 0, 40)
-DropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-DropdownButton.Font = Enum.Font.SourceSans
-DropdownButton.TextSize = 16
-DropdownButton.Text = "Selected: "..SelectedMutation.." ▼"
-DropdownButton.Parent = MainFrame
+local dropdownButton = Instance.new("TextButton", mainFrame)
+dropdownButton.Size = UDim2.new(1, -20, 0, 30)
+dropdownButton.Position = UDim2.new(0, 10, 0, 100)
+dropdownButton.Text = "Selected: None ▼"
+dropdownButton.Font = Enum.Font.SourceSans
+dropdownButton.TextSize = 16
+dropdownButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+dropdownButton.TextColor3 = Color3.new(1,1,1)
 
-local DropdownFrame = Instance.new("Frame")
-DropdownFrame.Size = UDim2.new(1, 0, 0, 150)
-DropdownFrame.Position = UDim2.new(0, 0, 0, 70)
-DropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-DropdownFrame.Visible = false
-DropdownFrame.ClipsDescendants = true
-DropdownFrame.Parent = MainFrame
+local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
+scrollFrame.Size = UDim2.new(1, -20, 0, 120)
+scrollFrame.Position = UDim2.new(0, 10, 0, 135)
+scrollFrame.CanvasSize = UDim2.new(0,0,0,#mutationList * 30)
+scrollFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+scrollFrame.BorderSizePixel = 0
+scrollFrame.Visible = false
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Parent = DropdownFrame
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 2)
+local uiList = Instance.new("UIListLayout", scrollFrame)
+uiList.Padding = UDim.new(0,2)
+uiList.FillDirection = Enum.FillDirection.Vertical
 
-for _, name in ipairs(mutationNames) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+local statusLabel = Instance.new("TextLabel", mainFrame)
+statusLabel.Size = UDim2.new(1, -20, 0, 30)
+statusLabel.Position = UDim2.new(0, 10, 0, 265)
+statusLabel.Text = "Status: Waiting..."
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 16
+statusLabel.TextColor3 = Color3.new(1,1,1)
+statusLabel.BackgroundTransparency = 1
+
+-- Dropdown toggle
+local selectedMutation = nil
+dropdownButton.MouseButton1Click:Connect(function()
+    scrollFrame.Visible = not scrollFrame.Visible
+end)
+
+-- Create mutation options buttons
+for _, mut in ipairs(mutationList) do
+    local btn = Instance.new("TextButton", scrollFrame)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.Text = mut
     btn.Font = Enum.Font.SourceSans
     btn.TextSize = 16
-    btn.Text = name
-    btn.Parent = DropdownFrame
-
+    btn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    btn.TextColor3 = Color3.new(1,1,1)
     btn.MouseButton1Click:Connect(function()
-        SelectedMutation = name
-        DropdownButton.Text = "Selected: "..name.." ▼"
-        DropdownFrame.Visible = false
-        dropdownOpen = false
+        selectedMutation = mut
+        dropdownButton.Text = "Selected: " .. mut .. " ▼"
+        scrollFrame.Visible = false
+        statusLabel.Text = "Status: Selected mutation: " .. mut
     end)
 end
 
-DropdownButton.MouseButton1Click:Connect(function()
-    dropdownOpen = not dropdownOpen
-    DropdownFrame.Visible = dropdownOpen
-end)
-
--- Mutate Button
-local MutateButton = Instance.new("TextButton")
-MutateButton.Size = UDim2.new(1, 0, 0, 40)
-MutateButton.Position = UDim2.new(0, 0, 0, 230)
-MutateButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-MutateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MutateButton.Font = Enum.Font.SourceSansBold
-MutateButton.TextSize = 18
-MutateButton.Text = "Click to Mutate Pet"
-MutateButton.Parent = MainFrame
-
--- Status Label
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, 0, 0, 30)
-StatusLabel.Position = UDim2.new(0, 0, 1, -35)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-StatusLabel.Font = Enum.Font.SourceSans
-StatusLabel.TextSize = 16
-StatusLabel.Text = "Status: No pet held!"
-StatusLabel.Parent = MainFrame
-
--- Helper: build pet lookup table
-local petModels = {}
-for _, pet in ipairs(petModelsFolder:GetChildren()) do
-    petModels[pet.Name:lower()] = pet
-end
-
--- Find held pet recursively, allowing mutation prefix removal
-local function findPetInDescendants(parent)
-    local prefixes = {"golden ", "shiny ", "rainbow ", "mega ", "tiny ", "tranquil ", "corrupted ", "frozen ", "windy ", "ironskin ", "radiant ", "shocked ", "ascended "}
-    for _, obj in ipairs(parent:GetDescendants()) do
+-- Pet detection function
+local function getHeldPet()
+    local char = player.Character
+    if not char then return nil end
+    for _, obj in ipairs(char:GetChildren()) do
         if obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") then
             local lname = obj.Name:lower()
-            -- Remove prefixes
-            for _, prefix in ipairs(prefixes) do
-                if lname:sub(1, #prefix) == prefix then
-                    lname = lname:sub(#prefix + 1)
-                    break
-                end
-            end
             if petModels[lname] then
                 return obj
             end
@@ -277,88 +145,77 @@ local function findPetInDescendants(parent)
     return nil
 end
 
-local function getHeldPet()
-    if player.Character then
-        return findPetInDescendants(player.Character)
-    end
-    return nil
-end
-
--- Get pet info (name, weight, age)
-local function getPetInfo(pet)
-    local name = pet.Name or "Unknown"
-    local weight = "N/A"
-    local age = "N/A"
-
-    -- Check if Weight and Age are stored as values in the pet model
-    local weightVal = pet:FindFirstChild("Weight") or pet:FindFirstChild("KG")
-    if weightVal and weightVal:IsA("NumberValue") then
-        weight = string.format("%.2f KG", weightVal.Value)
-    elseif pet:FindFirstChild("Weight") and pet.Weight:IsA("NumberValue") then
-        weight = string.format("%.2f KG", pet.Weight.Value)
-    end
-
-    local ageVal = pet:FindFirstChild("Age")
-    if ageVal and ageVal:IsA("IntValue") then
-        age = ageVal.Value
-    end
-
-    return name, weight, age
-end
-
--- Reset mutation visuals before applying new mutation
-local function resetMutationVisuals(pet)
+-- Mutation application function
+local function applyMutation(pet, mutationName)
+    local data = mutationData[mutationName]
+    if not data then return end
+    
+    -- Rename pet (remove previous prefixes)
+    pet.Name = data.Prefix .. pet.Name:gsub("^%w+ ", "")
+    
+    -- Apply colors/material
     for _, part in ipairs(pet:GetDescendants()) do
         if part:IsA("BasePart") then
-            part.Material = Enum.Material.Plastic
-            part.Color = Color3.fromRGB(255, 255, 255)
-            part.Transparency = 0
-        end
-        if part:IsA("ParticleEmitter") or part:IsA("Light") then
-            part.Enabled = false
-        end
-    end
-    -- Reset size if Mega/Tiny was applied previously
-    if pet.PrimaryPart then
-        pet.PrimaryPart.Size = pet.PrimaryPart.Size
-        for _, part in ipairs(pet:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Size = part.Size
+            part.Color = data.Color
+            part.Material = data.Material
+            -- Special effects for some mutations
+            if mutationName == "Rainbow" then
+                -- Rainbow cycling effect
+                coroutine.wrap(function()
+                    while pet and pet.Parent do
+                        for i=0,1,0.05 do
+                            part.Color = Color3.fromHSV(i,1,1)
+                            wait(0.1)
+                        end
+                    end
+                end)()
+            elseif mutationName == "Frozen" then
+                -- Add ice particles or transparency effect here if needed
+                part.Transparency = 0.3
+            elseif mutationName == "Ascended" then
+                -- Add glow or light effect (basic example)
+                if not part:FindFirstChild("AscendedLight") then
+                    local light = Instance.new("PointLight", part)
+                    light.Name = "AscendedLight"
+                    light.Color = Color3.new(1,1,1)
+                    light.Brightness = 3
+                    light.Range = 10
+                end
+            else
+                -- Remove effects for other parts if exist
+                local light = part:FindFirstChild("AscendedLight")
+                if light then light:Destroy() end
+                part.Transparency = 0
             end
         end
     end
 end
 
--- Apply the selected mutation to pet visuals
-local function applyMutation(pet, mutationName)
-    if not pet or not mutationName then return end
-    resetMutationVisuals(pet)
-
-    local func = Mutations[mutationName]
-    if func then
-        func(pet)
+-- Button click to mutate pet
+mutateButton.MouseButton1Click:Connect(function()
+    local pet = getHeldPet()
+    if not pet then
+        statusLabel.Text = "Status: No pet held!"
+        print("[PetMutator] No pet held detected.")
+        return
     end
-end
+    if not selectedMutation then
+        statusLabel.Text = "Status: No mutation selected!"
+        print("[PetMutator] No mutation selected.")
+        return
+    end
+    
+    print("[PetMutator] Applying mutation '" .. selectedMutation .. "' to pet '" .. pet.Name .. "'")
+    applyMutation(pet, selectedMutation)
+    statusLabel.Text = "Status: Applied mutation '" .. selectedMutation .. "'"
+end)
 
--- Update status label periodically
+-- Update held pet status on heartbeat
 RunService.Heartbeat:Connect(function()
     local pet = getHeldPet()
     if pet then
-        local name, weight, age = getPetInfo(pet)
-        StatusLabel.Text = ("Status: Holding pet: %s [%s] [Age %s]"):format(name, weight, age)
+        statusLabel.Text = "Status: Holding pet: " .. pet.Name
     else
-        StatusLabel.Text = "Status: No pet held!"
+        statusLabel.Text = "Status: No pet held!"
     end
 end)
-
--- Mutate button click handler
-MutateButton.MouseButton1Click:Connect(function()
-    local pet = getHeldPet()
-    if pet then
-        applyMutation(pet, SelectedMutation)
-    else
-        StatusLabel.Text = "Status: No pet held!"
-    end
-end)
-
-print("Pet Mutator UI loaded successfully!")
