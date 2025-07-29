@@ -28,16 +28,43 @@ uiCorner.Parent = mainFrame
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
+title.Position = UDim2.new(0, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "Bacon Scripts\nGrow A Garden\nPET MUTATOR!"
+title.Text = "Pet Mutator\n<font size='14'><i>by Bacon Scripts</i></font>"
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
+title.RichText = true
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextStrokeTransparency = 0.8
 title.TextYAlignment = Enum.TextYAlignment.Center
 title.Parent = mainFrame
 
-title.Position = UDim2.new(0, 0, 0, 5)
+local dragify = Instance.new("LocalScript")
+dragify.Source = [[
+local frame = script.Parent
+local dragging, input, startPos, startInputPos
+
+frame.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		startPos = frame.Position
+		startInputPos = i.Position
+		i.Changed:Connect(function()
+			if i.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+frame.InputChanged:Connect(function(i)
+	if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = i.Position - startInputPos
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+]]
+dragify.Parent = mainFrame
 
 local minimizeButton = Instance.new("TextButton")
 minimizeButton.Size = UDim2.new(0, 25, 0, 25)
@@ -172,7 +199,15 @@ end
 mutateButton.MouseButton1Click:Connect(function()
     mutateButton.Text = "Mutating..."
     wait(7)
-    heldPet = character:FindFirstChildWhichIsA("Model")
+    heldPet = nil
+    for _, obj in ipairs(character:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChild("PrimaryPart") then
+            if obj.Name:lower():find("pet") or obj.Name:lower():find("egg") then
+                heldPet = obj
+                break
+            end
+        end
+    end
     if heldPet then
         applyVisualMutation(heldPet)
         statusLabel.Text = "Success! "..selectedMutation.." applied."
