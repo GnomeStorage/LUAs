@@ -157,10 +157,9 @@ end
 local function scaleModel(pet, factor)
 	for _, obj in ipairs(pet:GetDescendants()) do
 		if obj:IsA("BasePart") then
-			obj.Size *= factor
-			obj.Position *= factor
+			obj.Size = obj.Size * factor
 		elseif obj:IsA("SpecialMesh") then
-			obj.Scale *= factor
+			obj.Scale = obj.Scale * factor
 		end
 	end
 end
