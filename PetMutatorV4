@@ -1,4 +1,4 @@
--- Pet Mutator V3 - Full Script with Fixes
+-- Pet Mutator V3 - Optimized and Scroll Fixed
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -30,6 +30,7 @@ local particleIDs = {
 }
 
 local selected = nil
+local mutatedModels = {}
 
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "PetMutatorUI"
@@ -50,8 +51,7 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
-
-local mutateButton = Instance.new("TextButton", mainFrame)
+\local mutateButton = Instance.new("TextButton", mainFrame)
 mutateButton.Size = UDim2.new(1, -20, 0, 30)
 mutateButton.Position = UDim2.new(0, 10, 0, 45)
 mutateButton.Text = "Mutate Pet"
@@ -72,15 +72,18 @@ dropdownButton.TextColor3 = Color3.new(1, 1, 1)
 local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
 scrollFrame.Size = UDim2.new(1, -20, 0, 90)
 scrollFrame.Position = UDim2.new(0, 10, 0, 115)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #mutationData * 26)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 5
+scrollFrame.ScrollBarThickness = 8
 scrollFrame.Visible = false
+scrollFrame.ClipsDescendants = true
 Instance.new("UICorner", scrollFrame).CornerRadius = UDim.new(0, 4)
 
 local uiList = Instance.new("UIListLayout", scrollFrame)
 uiList.Padding = UDim.new(0, 2)
+uiList.SortOrder = Enum.SortOrder.LayoutOrder
 
 local statusLabel = Instance.new("TextLabel", mainFrame)
 statusLabel.Size = UDim2.new(1, -20, 0, 25)
@@ -127,8 +130,9 @@ local function addParticleEffect(pet, mutation)
 	local assetId = particleIDs[mutation]
 	if not assetId then return end
 	for _, part in ipairs(pet:GetDescendants()) do
-		if part:IsA("BasePart") then
+		if part:IsA("BasePart") and not part:FindFirstChild("MutationParticle") then
 			local emitter = Instance.new("ParticleEmitter")
+			emitter.Name = "MutationParticle"
 			emitter.Texture = "rbxassetid://" .. assetId
 			emitter.Rate = 20
 			emitter.Lifetime = NumberRange.new(1, 1.5)
@@ -152,8 +156,10 @@ local function scaleModel(pet, factor)
 end
 
 local function applyStoredMutation(pet)
+	if mutatedModels[pet] then return end
 	local mutation = pet:GetAttribute("MutationType")
 	if not mutation or not mutationData[mutation] then return end
+	mutatedModels[pet] = true
 	local data = mutationData[mutation]
 	if data.Color then
 		for _, p in ipairs(pet:GetDescendants()) do
@@ -190,15 +196,14 @@ end)
 
 -- Mutation Tracker
 RunService.Heartbeat:Connect(function()
-	for _, pet in ipairs(workspace:GetDescendants()) do
-		if pet:IsA("Model") and pet:GetAttribute("MutationType") and not pet:GetAttribute("HasAppliedMutation") then
-			pet:SetAttribute("HasAppliedMutation", true)
-			applyStoredMutation(pet)
-		end
-	end
-
 	local held = getHeldPet()
 	if held then
 		statusLabel.Text = "Status: Holding pet: " .. held.Name
+	end
+
+	for _, pet in ipairs(workspace:GetChildren()) do
+		if pet:IsA("Model") and pet:GetAttribute("MutationType") and not mutatedModels[pet] then
+			applyStoredMutation(pet)
+		end
 	end
 end)
