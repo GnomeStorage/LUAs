@@ -1,130 +1,136 @@
--- Create GUI
-local ScreenGui = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "PetMutatorUI"
-ScreenGui.ResetOnSpawn = false
+--// Setup GUI
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
 
--- Drag Frame
-local DragFrame = Instance.new("Frame", ScreenGui)
-DragFrame.Size = UDim2.new(0, 300, 0, 40)
-DragFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
-DragFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-DragFrame.Active = true
-DragFrame.Draggable = true
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "PetMutatorUI"
+screenGui.ResetOnSpawn = false
 
--- Title
-local Title = Instance.new("TextLabel", DragFrame)
-Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Text = "Bacon Scripts\nPET MUTATOR"
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundTransparency = 1
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 300, 0, 220)
+mainFrame.Position = UDim2.new(0.5, -150, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.Active = true
+mainFrame.Draggable = true
 
--- Mutation Dropdown (input)
-local MutationDropdown = Instance.new("TextBox", ScreenGui)
-MutationDropdown.Size = UDim2.new(0, 300, 0, 30)
-MutationDropdown.Position = UDim2.new(0.3, 0, 0.3, 45)
-MutationDropdown.PlaceholderText = "Type mutation (e.g. Golden)"
-MutationDropdown.Text = ""
-MutationDropdown.Font = Enum.Font.SourceSans
-MutationDropdown.TextSize = 18
-MutationDropdown.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-MutationDropdown.TextColor3 = Color3.new(1, 1, 1)
+local uiCorner = Instance.new("UICorner", mainFrame)
+uiCorner.CornerRadius = UDim.new(0, 8)
 
--- Mutate Button
-local MutateButton = Instance.new("TextButton", ScreenGui)
-MutateButton.Size = UDim2.new(0, 300, 0, 30)
-MutateButton.Position = UDim2.new(0.3, 0, 0.3, 80)
-MutateButton.Text = "Click to Mutate Pet"
-MutateButton.Font = Enum.Font.SourceSansBold
-MutateButton.TextSize = 18
-MutateButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-MutateButton.TextColor3 = Color3.new(1, 1, 1)
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "Bacon Scripts\nPET MUTATOR"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
 
--- Status Label
-local StatusLabel = Instance.new("TextLabel", ScreenGui)
-StatusLabel.Size = UDim2.new(0, 300, 0, 25)
-StatusLabel.Position = UDim2.new(0.3, 0, 0.3, 115)
-StatusLabel.Text = "Status: Ready"
-StatusLabel.Font = Enum.Font.SourceSans
-StatusLabel.TextSize = 16
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.TextColor3 = Color3.new(1, 1, 1)
+local dropdown = Instance.new("TextButton", mainFrame)
+dropdown.Size = UDim2.new(1, -20, 0, 30)
+dropdown.Position = UDim2.new(0, 10, 0, 60)
+dropdown.Text = "Select Mutation"
+dropdown.Font = Enum.Font.SourceSans
+dropdown.TextSize = 18
+dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+dropdown.TextColor3 = Color3.new(1, 1, 1)
 
--- Pet Info
-local PetInfo = Instance.new("TextLabel", ScreenGui)
-PetInfo.Size = UDim2.new(0, 300, 0, 40)
-PetInfo.Position = UDim2.new(0.3, 0, 0.3, 145)
-PetInfo.Text = "Pet Info: N/A"
-PetInfo.Font = Enum.Font.SourceSans
-PetInfo.TextSize = 16
-PetInfo.BackgroundTransparency = 1
-PetInfo.TextColor3 = Color3.new(1, 1, 1)
+local optionsFrame = Instance.new("Frame", mainFrame)
+optionsFrame.Size = UDim2.new(1, -20, 0, 120)
+optionsFrame.Position = UDim2.new(0, 10, 0, 95)
+optionsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+optionsFrame.Visible = false
+optionsFrame.ClipsDescendants = true
 
--- Mutation Effect Display
-local EffectLabel = Instance.new("TextLabel", ScreenGui)
-EffectLabel.Size = UDim2.new(0, 300, 0, 40)
-EffectLabel.Position = UDim2.new(0.3, 0, 0.3, 185)
-EffectLabel.Text = "Effect: N/A"
-EffectLabel.Font = Enum.Font.SourceSans
-EffectLabel.TextSize = 16
-EffectLabel.BackgroundTransparency = 1
-EffectLabel.TextColor3 = Color3.new(1, 1, 1)
+local uiList = Instance.new("UIListLayout", optionsFrame)
+uiList.FillDirection = Enum.FillDirection.Vertical
+uiList.Padding = UDim.new(0, 2)
 
--- Mutation Data
+local mutateButton = Instance.new("TextButton", mainFrame)
+mutateButton.Size = UDim2.new(1, -20, 0, 30)
+mutateButton.Position = UDim2.new(0, 10, 0, 170)
+mutateButton.Text = "Click to Mutate Pet"
+mutateButton.Font = Enum.Font.SourceSansBold
+mutateButton.TextSize = 18
+mutateButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+mutateButton.TextColor3 = Color3.new(1, 1, 1)
+
+local status = Instance.new("TextLabel", mainFrame)
+status.Size = UDim2.new(1, -20, 0, 20)
+status.Position = UDim2.new(0, 10, 0, 200)
+status.Text = "Status: Waiting..."
+status.Font = Enum.Font.SourceSans
+status.TextSize = 16
+status.TextColor3 = Color3.new(1, 1, 1)
+status.BackgroundTransparency = 1
+
+--// Mutation Data
 local mutationMap = {
-	Golden = {Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0), Effect = "+10% Passive Boost & Reduced Cooldown"},
-	Shiny = {Prefix = "Shiny ", Color = Color3.fromRGB(173, 216, 230), Effect = "+30% XP/sec"},
-	Rainbow = {Prefix = "Rainbow ", Color = Color3.fromRGB(255, 0, 255), Effect = "+20% Passive Boost & Reduced Cooldown"},
-	Mega = {Prefix = "Mega ", Color = Color3.fromRGB(255, 150, 100), Effect = "Huge Size, +10–40 XP/sec"},
-	Tiny = {Prefix = "Tiny ", Color = Color3.fromRGB(180, 180, 180), Effect = "Tiny Size, +5–30 XP/sec"},
-	Tranquil = {Prefix = "Tranquil ", Color = Color3.fromRGB(102, 204, 255), Effect = "Nearby fruits may find peace every ~25 min"},
-	Corrupted = {Prefix = "Corrupted ", Color = Color3.fromRGB(75, 0, 130), Effect = "Nearby fruits may corrupt every ~25 min"},
-	Inverted = {Prefix = "Inverted ", Color = Color3.fromRGB(255, 255, 255), Effect = "+50% XP/sec"},
-	Frozen = {Prefix = "Frozen ", Color = Color3.fromRGB(140, 220, 255), Effect = "~20-30% chance to freeze fruit every ~5 min"},
-	Windy = {Prefix = "Windy ", Color = Color3.fromRGB(210, 255, 255), Effect = "~20-30% chance of windstruck fruit every 0.5–5 min"},
-	IronSkin = {Prefix = "IronSkin ", Color = Color3.fromRGB(200, 200, 200), Effect = "35–45% chance to recover stolen fruit"},
-	Radiant = {Prefix = "Radiant ", Color = Color3.fromRGB(255, 255, 153), Effect = "Boosts plant growth by 24 hrs every ~20–30 min"},
-	Shocked = {Prefix = "Shocked ", Color = Color3.fromRGB(255, 255, 102), Effect = "Can shock fruit during thunder every ~45–60s"},
-	Ascended = {Prefix = "Ascended ", Color = Color3.fromRGB(255, 240, 200), Effect = "Random fruit gains Dawnbound every 5–6 hours"}
+	Golden = {Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0)},
+	Shiny = {Prefix = "Shiny ", Color = Color3.fromRGB(173, 216, 230)},
+	Rainbow = {Prefix = "Rainbow ", Color = Color3.fromRGB(255, 0, 255)},
+	Mega = {Prefix = "Mega ", Color = Color3.fromRGB(255, 150, 100)},
+	Tiny = {Prefix = "Tiny ", Color = Color3.fromRGB(180, 180, 180)},
+	Tranquil = {Prefix = "Tranquil ", Color = Color3.fromRGB(102, 204, 255)},
+	Corrupted = {Prefix = "Corrupted ", Color = Color3.fromRGB(75, 0, 130)},
+	Inverted = {Prefix = "Inverted ", Color = Color3.fromRGB(255, 255, 255)},
+	Frozen = {Prefix = "Frozen ", Color = Color3.fromRGB(140, 220, 255)},
+	Windy = {Prefix = "Windy ", Color = Color3.fromRGB(210, 255, 255)},
+	IronSkin = {Prefix = "IronSkin ", Color = Color3.fromRGB(200, 200, 200)},
+	Radiant = {Prefix = "Radiant ", Color = Color3.fromRGB(255, 255, 153)},
+	Shocked = {Prefix = "Shocked ", Color = Color3.fromRGB(255, 255, 102)},
+	Ascended = {Prefix = "Ascended ", Color = Color3.fromRGB(255, 240, 200)},
 }
 
--- Get held pet (must contain "PetTag")
+local selectedMutation = nil
+
+--// Dropdown Logic
+dropdown.MouseButton1Click:Connect(function()
+	optionsFrame.Visible = not optionsFrame.Visible
+end)
+
+for mutName, mutData in pairs(mutationMap) do
+	local btn = Instance.new("TextButton", optionsFrame)
+	btn.Size = UDim2.new(1, 0, 0, 20)
+	btn.Text = mutName
+	btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 16
+
+	btn.MouseButton1Click:Connect(function()
+		selectedMutation = mutName
+		dropdown.Text = mutName
+		optionsFrame.Visible = false
+	end)
+end
+
+--// Get Held Pet
 local function getHeldPet()
-	local char = game.Players.LocalPlayer.Character
+	local char = player.Character
 	if not char then return nil end
-	for _, child in pairs(char:GetChildren()) do
-		if child:IsA("Model") and child:FindFirstChild("PetTag") then
-			return child
+	for _, obj in pairs(char:GetChildren()) do
+		if obj:IsA("Model") and obj:FindFirstChild("PetTag") then
+			return obj
 		end
 	end
 	return nil
 end
 
--- Update info
-local function updatePetInfo(pet)
-	if not pet then
-		PetInfo.Text = "Pet Info: None"
-	else
-		local weight = pet:GetAttribute("Weight") or "?"
-		local age = pet:GetAttribute("Age") or "?"
-		PetInfo.Text = pet.Name .. "\n[" .. tostring(weight) .. " KG] [Age " .. tostring(age) .. "]"
-	end
-end
-
--- Mutate
-MutateButton.MouseButton1Click:Connect(function()
+--// Apply Mutation
+mutateButton.MouseButton1Click:Connect(function()
 	local pet = getHeldPet()
 	if not pet then
-		StatusLabel.Text = "Status: No pet held!"
+		status.Text = "Status: No pet held!"
+		return
+	end
+	if not selectedMutation then
+		status.Text = "Status: No mutation selected!"
 		return
 	end
 
-	local mut = MutationDropdown.Text
-	local data = mutationMap[mut]
+	local data = mutationMap[selectedMutation]
 	if not data then
-		StatusLabel.Text = "Status: Invalid mutation!"
-		EffectLabel.Text = "Effect: Unknown"
+		status.Text = "Status: Invalid mutation!"
 		return
 	end
 
@@ -137,12 +143,5 @@ MutateButton.MouseButton1Click:Connect(function()
 		end
 	end
 
-	StatusLabel.Text = "Status: Applied " .. mut
-	EffectLabel.Text = "Effect: " .. data.Effect
-	updatePetInfo(pet)
+	status.Text = "Status: Applied " .. selectedMutation .. "!"
 end)
-
--- Auto-update info
-task.wait(1)
-local heldPet = getHeldPet()
-updatePetInfo(heldPet)
