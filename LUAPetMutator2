@@ -1,6 +1,7 @@
 -- CONSTANTS
 local Players = game:GetService("Players")
 local Replicated = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- GATHER ALL PET MODEL NAMES
@@ -11,6 +12,16 @@ if Replicated:FindFirstChild("Pets") then
     end
 end
 
+-- MUTATION DATA (example)
+local mutationData = {
+    Inverted = { Prefix = "Inverted ", Color = Color3.fromRGB(0, 255, 255) },
+    Radiant = { Prefix = "Radiant ", Color = Color3.fromRGB(255, 255, 0) },
+    Golden = { Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0) },
+    -- Add more as needed...
+}
+
+local mutationMap = {} for k in pairs(mutationData) do table.insert(mutationMap, k) end
+
 -- GUI Setup
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "PetMutatorUI"
@@ -20,15 +31,14 @@ local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 320, 0, 260)
 mainFrame.Position = UDim2.new(0.5, -160, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-mainFrame.Active = true
-mainFrame.Draggable = true
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,8)
+mainFrame.Active, mainFrame.Draggable = true, true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
 local title = Instance.new("TextLabel", mainFrame)
 title.Size = UDim2.new(1, 0, 0, 50)
 title.Text = "Bacon Scripts\nPET MUTATOR"
 title.Font, title.TextSize = Enum.Font.SourceSansBold, 20
-title.TextColor3 = Color3.new(1,1,1)
+title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
 
 local mutateButton = Instance.new("TextButton", mainFrame)
@@ -36,71 +46,77 @@ mutateButton.Size = UDim2.new(1, -20, 0, 30)
 mutateButton.Position = UDim2.new(0, 10, 0, 60)
 mutateButton.Text = "Click to Mutate Pet"
 mutateButton.Font, mutateButton.TextSize = Enum.Font.SourceSansBold, 18
-mutateButton.BackgroundColor3 = Color3.fromRGB(90,90,90)
-mutateButton.TextColor3 = Color3.new(1,1,1)
+mutateButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+mutateButton.TextColor3 = Color3.new(1, 1, 1)
 
 local dropdownLabel = Instance.new("TextLabel", mainFrame)
 dropdownLabel.Size = UDim2.new(1, -20, 0, 25)
 dropdownLabel.Position = UDim2.new(0, 10, 0, 100)
 dropdownLabel.Text = "Selected: None"
 dropdownLabel.Font, dropdownLabel.TextSize = Enum.Font.SourceSans, 16
-dropdownLabel.TextColor3 = Color3.new(1,1,1)
-dropdownLabel.BackgroundColor3 = Color3.fromRGB(60,60,60)
+dropdownLabel.TextColor3 = Color3.new(1, 1, 1)
+dropdownLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 
 local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
 scrollFrame.Size = UDim2.new(1, -20, 0, 120)
 scrollFrame.Position = UDim2.new(0, 10, 0, 130)
-scrollFrame.CanvasSize = UDim2.new(0,0,0, #mutationList * 24)
-scrollFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #mutationMap * 24)
+scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 scrollFrame.BorderSizePixel = 0
-local uiList = Instance.new("UIListLayout", scrollFrame); uiList.Padding = UDim.new(0,2); uiList.FillDirection = Enum.FillDirection.Vertical
+local uiList = Instance.new("UIListLayout", scrollFrame)
+uiList.Padding = UDim.new(0, 2)
+uiList.FillDirection = Enum.FillDirection.Vertical
 
 local statusLabel = Instance.new("TextLabel", mainFrame)
-statusLabel.Size, statusLabel.Position = UDim2.new(1, -20, 0, 30), UDim2.new(0,10,0,255)
+statusLabel.Size, statusLabel.Position = UDim2.new(1, -20, 0, 30), UDim2.new(0, 10, 0, 255)
 statusLabel.Text = "Status: Waiting..."
 statusLabel.Font, statusLabel.TextSize = Enum.Font.SourceSans, 16
-statusLabel.TextColor3 = Color3.new(1,1,1)
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
 statusLabel.BackgroundTransparency = 1
 
--- Mutation Definitions
-local mutationMap = {
-    "Golden","Shiny","Rainbow","Mega","Tiny","Tranquil",
-    "Corrupted","Inverted","Frozen","Windy","IronSkin",
-    "Radiant","Shocked","Ascended"
-}
-local mutationData = { -- color map same as before }
-
--- Populate dropdown scroll
+-- Mutation Dropdown Buttons
 local selected = nil
 for _, mut in ipairs(mutationMap) do
     local btn = Instance.new("TextButton", scrollFrame)
     btn.Size = UDim2.new(1, 0, 0, 24)
     btn.Text = mut
     btn.Font, btn.TextSize = Enum.Font.SourceSans, 16
-    btn.BackgroundColor3 = Color3.fromRGB(80,80,80)
-    btn.TextColor3 = Color3.new(1,1,1)
+    btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    btn.TextColor3 = Color3.new(1, 1, 1)
     btn.MouseButton1Click:Connect(function()
         selected = mut
         dropdownLabel.Text = "Selected: " .. mut
     end)
 end
 
--- Held Pet Detection: Checks petModels table for model names under character
+-- Pet Detection
 local function getHeldPet()
     local char = player.Character
     if not char then return nil end
-    for _, obj in ipairs(char:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") then
-            local lname = obj.Name:lower()
-            if petModels[lname] then
-                return obj
+
+    -- First check Tools with Models
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            local petModel = tool:FindFirstChildWhichIsA("Model")
+            if petModel and petModels[petModel.Name:lower()] then
+                return petModel
+            elseif petModels[tool.Name:lower()] then
+                return tool
             end
         end
     end
+
+    -- Also check for Models directly in the character
+    for _, obj in ipairs(char:GetChildren()) do
+        if obj:IsA("Model") and petModels[obj.Name:lower()] then
+            return obj
+        end
+    end
+
     return nil
 end
 
--- Mutation logic
+-- Mutation Logic
 mutateButton.MouseButton1Click:Connect(function()
     local pet = getHeldPet()
     if not pet then
@@ -111,18 +127,39 @@ mutateButton.MouseButton1Click:Connect(function()
         statusLabel.Text = "Status: No mutation selected!"
         return
     end
+
     local data = mutationData[selected]
     if data then
+        -- Rename pet
         pet.Name = data.Prefix .. pet.Name:gsub("^%w+ ", "")
-        for _,p in ipairs(pet:GetDescendants()) do
-            if p:IsA("BasePart") then p.Color = data.Color; p.Material = Enum.Material.Metal end
+
+        -- Colorize all BaseParts
+        for _, p in ipairs(pet:GetDescendants()) do
+            if p:IsA("BasePart") then
+                p.Color = data.Color
+                p.Material = Enum.Material.Metal
+            end
         end
-        statusLabel.Text = "Status: Applied " .. selected
+
+        -- Optionally: mark it with attribute (so game can recognize it's mutated)
+        pet:SetAttribute("Mutation", selected)
+
+        statusLabel.Text = "Status: Applied " .. selected .. " to " .. pet.Name
     end
 end)
 
--- Update if pet held changes
-game:GetService("RunService").Heartbeat:Connect(function()
-    local pet = getHeldPet()
-    if pet then statusLabel.Text = "Status: Holding pet: " .. pet.Name end
+-- Live UI Update
+local lastStatusUpdate = 0
+local statusCooldown = 2
+
+RunService.Heartbeat:Connect(function(dt)
+    lastStatusUpdate = lastStatusUpdate + dt
+    if lastStatusUpdate >= statusCooldown then
+        local pet = getHeldPet()
+        if pet then
+            statusLabel.Text = "Status: Holding pet: " .. pet.Name
+        else
+            statusLabel.Text = "Status: No pet held!"
+        end
+    end
 end)
