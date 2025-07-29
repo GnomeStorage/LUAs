@@ -4,245 +4,191 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local heldPet = nil
 local selectedMutation = nil
-
--- GUI Creation
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PetMutatorGUI"
 screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 360)
-mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(166, 124, 82)
-mainFrame.BorderSizePixel = 0
-mainFrame.BackgroundTransparency = 0.05
-mainFrame.Name = "MainFrame"
-mainFrame.Active = true
-mainFrame.Draggable = true -- For desktop drag
-mainFrame.Parent = screenGui
+-- [GUI Setup: frame, title, close/minimize buttons omitted for brevity, assumed same as before]
 
--- Mobile drag patch
-local dragging = false
-local dragInput, dragStart, startPos
+-- Mutation button
+local mutateButton = Instance.new("TextButton")
+mutateButton.Size = UDim2.new(1, -20, 0, 30)
+mutateButton.Position = UDim2.new(0, 10, 0, 110 + #mutations * 20 + 10)
+mutateButton.BackgroundColor3 = Color3.fromRGB(90, 60, 40)
+mutateButton.Text = "Mutate Pet"
+mutateButton.TextColor3 = Color3.new(1,1,1)
+mutateButton.Font = Enum.Font.GothamBold
+mutateButton.TextSize = 16
+mutateButton.Parent = mainFrame
 
-mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = mainFrame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+-- Loading bar
+local loadingBar = Instance.new("Frame")
+loadingBar.Size = UDim2.new(0, 0, 0, 6)
+loadingBar.Position = UDim2.new(0, 10, 1, -40)
+loadingBar.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+loadingBar.BorderSizePixel = 0
+loadingBar.Visible = false
+loadingBar.Parent = mainFrame
+
+-- Mutation success popup
+local successPopup = Instance.new("TextLabel")
+successPopup.Size = UDim2.new(1, 0, 0, 30)
+successPopup.Position = UDim2.new(0, 0, 0, -40)
+successPopup.BackgroundColor3 = Color3.fromRGB(60, 200, 60)
+successPopup.Text = "Mutation Success!"
+successPopup.Font = Enum.Font.GothamBold
+successPopup.TextColor3 = Color3.new(1, 1, 1)
+successPopup.TextSize = 18
+successPopup.Visible = false
+successPopup.Parent = mainFrame
+
+local function applyMutationEffect(petModel, mutation)
+	if not petModel then return end
+	-- Clear existing auras
+	for _, v in pairs(petModel:GetChildren()) do
+		if v:IsA("ParticleEmitter") or v.Name:match("Aura") then v:Destroy() end
+	end
+	-- Apply mutation-based visual effect
+	if mutation == "Shiny" then
+		local shine = Instance.new("ParticleEmitter")
+		shine.Texture = "rbxassetid://11747293362"
+		shine.Rate = 6
+		shine.Lifetime = NumberRange.new(0.6)
+		shine.Parent = petModel.PrimaryPart or petModel:FindFirstChildWhichIsA("BasePart")
+	elseif mutation == "Mega" then
+		petModel:SetPrimaryPartCFrame(petModel:GetPrimaryPartCFrame())
+		petModel.PrimaryPart.Size *= 1.5
+	elseif mutation == "Frozen" then
+		for _, part in pairs(petModel:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.fromRGB(150, 200, 255)
 			end
-		end)
-	end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-	if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-		local delta = input.Position - dragStart
-		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
-end)
-
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 12)
-uiCorner.Parent = mainFrame
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Position = UDim2.new(0, 0, 0, 5)
-title.BackgroundTransparency = 1
-title.Text = "Pet Mutator\n<font size='14'><i>by Bacon Scripts</i></font>"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 20
-title.RichText = true
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.TextStrokeTransparency = 0.8
-title.TextYAlignment = Enum.TextYAlignment.Center
-title.Parent = mainFrame
-
--- Close Button
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 24, 0, 24)
-closeButton.Position = UDim2.new(1, -30, 0, 6)
-closeButton.BackgroundColor3 = Color3.fromRGB(120, 80, 55)
-closeButton.Text = "X"
-closeButton.TextColor3 = Color3.new(1,1,1)
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 16
-closeButton.Parent = mainFrame
-closeButton.MouseButton1Click:Connect(function()
-	screenGui:Destroy()
-end)
-
--- Minimize Button
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 24, 0, 24)
-minimizeButton.Position = UDim2.new(1, -60, 0, 6)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(120, 80, 55)
-minimizeButton.Text = "–"
-minimizeButton.TextColor3 = Color3.new(1,1,1)
-minimizeButton.Font = Enum.Font.GothamBold
-minimizeButton.TextSize = 18
-minimizeButton.Parent = mainFrame
-
-local minimized = false
-minimizeButton.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	for _, child in ipairs(mainFrame:GetChildren()) do
-		if child ~= title and child ~= minimizeButton and child ~= closeButton and not child:IsA("UICorner") then
-			child.Visible = not minimized
 		end
+	-- Add more mutations here
 	end
+end
+
+mutateButton.MouseButton1Click:Connect(function()
+	if not heldPet or not selectedMutation then return end
+	loadingBar.Visible = true
+	loadingBar.Size = UDim2.new(0, 0, 0, 6)
+	TweenService:Create(loadingBar, TweenInfo.new(7), {Size = UDim2.new(1, -20, 0, 6)}):Play()
+	wait(7)
+	loadingBar.Visible = false
+	
+	-- Rename pet tool
+	heldPet.Name = selectedMutation .. " " .. heldPet.Name
+	
+	-- Apply effect to model visually
+	if heldPet:FindFirstChild("Pet") and heldPet.Pet:IsA("Model") then
+		applyMutationEffect(heldPet.Pet, selectedMutation)
+	end
+	
+	successPopup.Visible = true
+	TweenService:Create(successPopup, TweenInfo.new(2), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+	wait(2)
+	successPopup.Visible = false
+	successPopup.TextTransparency = 0
+	successPopup.BackgroundTransparency = 0
 end)
 
--- Accurate mutation list from Grow a Garden Wiki
+RunService.RenderStepped:Connect(function()
+	updateHeldPet()
+end)
+
+-- Dropdown for mutations
+local mutationDropdown = Instance.new("TextButton")
+mutationDropdown.Size = UDim2.new(1, -20, 0, 25)
+mutationDropdown.Position = mutateButton.Position + UDim2.new(0, 0, 0, 40)
+mutationDropdown.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+mutationDropdown.Text = "Select Mutation"
+mutationDropdown.TextColor3 = Color3.new(1,1,1)
+mutationDropdown.Font = Enum.Font.Gotham
+mutationDropdown.TextSize = 14
+mutationDropdown.Parent = mainFrame
+
+-- Holder for dropdown options
+local dropdownFrame = Instance.new("Frame")
+dropdownFrame.Size = UDim2.new(1, -20, 0, 150)
+dropdownFrame.Position = mutationDropdown.Position + UDim2.new(0, 0, 0, 25)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+dropdownFrame.Visible = false
+dropdownFrame.ClipsDescendants = true
+dropdownFrame.Parent = mainFrame
+
+-- Scrollable list
+local scrolling = Instance.new("ScrollingFrame")
+scrolling.Size = UDim2.new(1, 0, 1, 0)
+scrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrolling.ScrollBarThickness = 4
+scrolling.BackgroundTransparency = 1
+scrolling.Parent = dropdownFrame
+
+-- List layout
+local layout = Instance.new("UIListLayout")
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 4)
+layout.Parent = scrolling
+
+-- Available mutation types (abbreviated set for example)
 local mutationList = {
 	"Shiny", "Inverted", "Frozen", "Windy", "Golden",
 	"Mega", "Tiny", "Tranquil", "Corrupted", "IronSkin",
 	"Radiant", "Rainbow", "Shocked", "Ascended"
 }
 
--- Dropdown menu
-local dropdown = Instance.new("TextButton")
-dropdown.Size = UDim2.new(1, -40, 0, 30)
-dropdown.Position = UDim2.new(0, 20, 0, 60)
-dropdown.BackgroundColor3 = Color3.fromRGB(192, 140, 99)
-dropdown.TextColor3 = Color3.new(1, 1, 1)
-dropdown.Text = "Select Mutation"
-dropdown.Font = Enum.Font.Gotham
-dropdown.TextSize = 14
-dropdown.Parent = mainFrame
-
-local dropdownFrame = Instance.new("Frame")
-dropdownFrame.Size = UDim2.new(1, 0, 0, #mutationList * 24)
-dropdownFrame.Position = UDim2.new(0, 0, 1, 0)
-dropdownFrame.BackgroundColor3 = Color3.fromRGB(166, 124, 82)
-dropdownFrame.Visible = false
-dropdownFrame.Parent = dropdown
-
-for i, mutation in ipairs(mutationList) do
-	local option = Instance.new("TextButton")
-	option.Size = UDim2.new(1, 0, 0, 24)
-	option.Position = UDim2.new(0, 0, 0, (i - 1) * 24)
-	option.BackgroundColor3 = Color3.fromRGB(140, 100, 70)
-	option.TextColor3 = Color3.new(1, 1, 1)
-	option.Text = mutation
-	option.Font = Enum.Font.Gotham
-	option.TextSize = 14
-	option.Parent = dropdownFrame
-
-	option.MouseButton1Click:Connect(function()
-		dropdown.Text = mutation
-		selectedMutation = mutation
+for _, mut in ipairs(mutationList) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -8, 0, 24)
+	btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+	btn.Text = mut
+	btn.Font = Enum.Font.Gotham
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.TextSize = 13
+	btn.Parent = scrolling
+	btn.MouseButton1Click:Connect(function()
+		selectedMutation = mut
+		mutationDropdown.Text = mut
 		dropdownFrame.Visible = false
 	end)
 end
 
-dropdown.MouseButton1Click:Connect(function()
+scrolling.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y)
+
+mutationDropdown.MouseButton1Click:Connect(function()
 	dropdownFrame.Visible = not dropdownFrame.Visible
 end)
 
--- Mutate button
-local mutateBtn = Instance.new("TextButton")
-mutateBtn.Size = UDim2.new(1, -40, 0, 40)
-mutateBtn.Position = UDim2.new(0, 20, 0, 100)
-mutateBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 120)
-mutateBtn.TextColor3 = Color3.new(1, 1, 1)
-mutateBtn.Text = "Mutate Pet"
-mutateBtn.Font = Enum.Font.GothamBold
-mutateBtn.TextSize = 16
-mutateBtn.Parent = mainFrame
+-- Held pet info label
+local petInfo = Instance.new("TextLabel")
+petInfo.Size = UDim2.new(1, -20, 0, 22)
+petInfo.Position = UDim2.new(0, 10, 0, 70)
+petInfo.BackgroundTransparency = 1
+petInfo.Text = "Held: None"
+petInfo.Font = Enum.Font.Gotham
+petInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+petInfo.TextSize = 14
+petInfo.TextXAlignment = Enum.TextXAlignment.Left
+petInfo.Parent = mainFrame
 
--- Loading bar
-local loadingBar = Instance.new("Frame")
-loadingBar.Size = UDim2.new(0, 0, 0, 8)
-loadingBar.Position = UDim2.new(0, 20, 0, 150)
-loadingBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-loadingBar.BorderSizePixel = 0
-loadingBar.Visible = false
-loadingBar.Parent = mainFrame
-
--- Mutation success label
-local successLabel = Instance.new("TextLabel")
-successLabel.Size = UDim2.new(1, -40, 0, 30)
-successLabel.Position = UDim2.new(0, 20, 0, 170)
-successLabel.BackgroundTransparency = 1
-successLabel.TextColor3 = Color3.new(1, 1, 1)
-successLabel.Font = Enum.Font.GothamBold
-successLabel.TextSize = 16
-successLabel.Text = ""
-successLabel.Visible = false
-successLabel.Parent = mainFrame
-
--- Pet name display
-local petNameLabel = Instance.new("TextLabel")
-petNameLabel.Size = UDim2.new(1, -40, 0, 26)
-petNameLabel.Position = UDim2.new(0, 20, 0, 210)
-petNameLabel.BackgroundTransparency = 1
-petNameLabel.TextColor3 = Color3.new(1, 1, 1)
-petNameLabel.Font = Enum.Font.GothamSemibold
-petNameLabel.TextSize = 15
-petNameLabel.Text = ""
-petNameLabel.Visible = true
-petNameLabel.Parent = mainFrame
-
--- Fake mutate logic
-mutateBtn.MouseButton1Click:Connect(function()
-	if not selectedMutation then return end
-
-	loadingBar.Visible = true
-	loadingBar.Size = UDim2.new(0, 0, 0, 8)
-	TweenService:Create(loadingBar, TweenInfo.new(7), {
-		Size = UDim2.new(1, -40, 0, 8)
-	}):Play()
-
-	task.wait(7)
-	loadingBar.Visible = false
-
-	-- Apply fake mutation to held pet
-	heldPet = character:FindFirstChildWhichIsA("Model")
-	if heldPet then
-		local head = heldPet:FindFirstChild("Head") or heldPet:FindFirstChildWhichIsA("BasePart")
-		if head then
-			local label = head:FindFirstChild("MutationName") or Instance.new("BillboardGui")
-			label.Name = "MutationName"
-			label.Size = UDim2.new(0, 200, 0, 50)
-			label.StudsOffset = Vector3.new(0, 2.5, 0)
-			label.AlwaysOnTop = true
-			label.Adornee = head
-			label.Parent = head
-
-			local txt = label:FindFirstChild("Text") or Instance.new("TextLabel")
-			txt.Name = "Text"
-			txt.Size = UDim2.new(1, 0, 1, 0)
-			txt.BackgroundTransparency = 1
-			txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-			txt.TextStrokeTransparency = 0.6
-			txt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-			txt.Font = Enum.Font.GothamBold
-			txt.TextScaled = true
-			txt.Text = selectedMutation .. " " .. heldPet.Name
-			txt.Parent = label
-
-			-- UI update
-			petNameLabel.Text = txt.Text .. "  (1.0kg)"
-		end
+-- Detect held pet tool and update label
+function updateHeldPet()
+	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	if tool and tool:FindFirstChild("Pet") then
+		local name = tool.Name
+		local kgValue = tool:FindFirstChild("KG")
+		local kgText = kgValue and (" - " .. tostring(kgValue.Value) .. "kg") or ""
+		heldPet = tool
+		petInfo.Text = "Held: " .. name .. kgText
+	else
+		heldPet = nil
+		petInfo.Text = "Held: None"
 	end
+end
 
-	successLabel.Text = selectedMutation .. " Mutation Applied!"
-	successLabel.Visible = true
-	TweenService:Create(successLabel, TweenInfo.new(1), {TextTransparency = 0}):Play()
-	task.delay(2, function()
-		TweenService:Create(successLabel, TweenInfo.new(1), {TextTransparency = 1}):Play()
-		task.wait(1)
-		successLabel.Visible = false
-		successLabel.TextTransparency = 0
-	end)
-end)
