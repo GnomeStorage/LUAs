@@ -7,7 +7,7 @@ local mutationData = {
 	Golden     = { Prefix = "Golden ", Color = Color3.fromRGB(255, 215, 0) },
 	Shiny      = { Prefix = "Shiny ", Color = Color3.fromRGB(0, 255, 255) },
 	Rainbow    = { Prefix = "Rainbow ", Color = Color3.fromRGB(255, 0, 255) },
-	Mega       = { Prefix = "Mega ", Color = nil }, -- size only
+	Mega       = { Prefix = "Mega ", Color = nil },
 	Tiny       = { Prefix = "Tiny ", Color = Color3.fromRGB(150, 150, 150) },
 	Tranquil   = { Prefix = "Tranquil ", Color = Color3.fromRGB(100, 200, 255) },
 	Corrupted  = { Prefix = "Corrupted ", Color = Color3.fromRGB(80, 0, 120) },
@@ -72,11 +72,14 @@ dropdownButton.TextColor3 = Color3.new(1, 1, 1)
 local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
 scrollFrame.Size = UDim2.new(1, -20, 0, 90)
 scrollFrame.Position = UDim2.new(0, 10, 0, 115)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #mutationData * 26)
 scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 5
 scrollFrame.Visible = false
+scrollFrame.ClipsDescendants = true
+scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 Instance.new("UICorner", scrollFrame).CornerRadius = UDim.new(0, 4)
 
 local uiList = Instance.new("UIListLayout", scrollFrame)
@@ -97,7 +100,7 @@ dropdownButton.MouseButton1Click:Connect(function()
 	dropdownButton.Text = scrollFrame.Visible and "Choose Mutation ▲" or "Choose Mutation ▼"
 end)
 
--- Dropdown Items
+-- Create Mutation Buttons
 for name, _ in pairs(mutationData) do
 	local btn = Instance.new("TextButton", scrollFrame)
 	btn.Size = UDim2.new(1, 0, 0, 24)
@@ -124,11 +127,10 @@ local function getHeldPet()
 			return tool
 		end
 	end
-
 	return nil
 end
 
--- Particle Effect Logic
+-- Particle Effect
 local function addParticleEffect(pet, mutation)
 	local assetId = particleIDs[mutation]
 	if not assetId then return end
@@ -148,7 +150,35 @@ local function addParticleEffect(pet, mutation)
 	end
 end
 
--- Mutation Logic
+-- Apply Mutation from Attributes
+local function applyStoredMutation(pet)
+	if not pet:GetAttribute("MutationType") then return end
+	local mutation = pet:GetAttribute("MutationType")
+	local data = mutationData[mutation]
+	if not data then return end
+
+	pet.Name = data.Prefix .. pet.Name:gsub("^%w+ ", "")
+	for _, p in ipairs(pet:GetDescendants()) do
+		if p:IsA("BasePart") and data.Color then
+			p.Color = data.Color
+			p.Material = Enum.Material.Neon
+		end
+	end
+
+	if mutation == "Mega" then
+		pet:SetPrimaryPartCFrame(pet:GetPrimaryPartCFrame())
+		pet.PrimaryPart.Size *= 2
+		for _, part in ipairs(pet:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Size *= 1.5
+			end
+		end
+	end
+
+	addParticleEffect(pet, mutation)
+end
+
+-- Mutate Pet on Click
 mutateButton.MouseButton1Click:Connect(function()
 	local pet = getHeldPet()
 	if not pet then
@@ -162,18 +192,18 @@ mutateButton.MouseButton1Click:Connect(function()
 
 	local data = mutationData[selected]
 	pet.Name = data.Prefix .. pet.Name:gsub("^%w+ ", "")
+	pet:SetAttribute("MutationType", selected)
+	pet:SetAttribute("HasAppliedMutation", true)
 
 	for _, p in ipairs(pet:GetDescendants()) do
-		if p:IsA("BasePart") then
-			if data.Color then
-				p.Color = data.Color
-				p.Material = Enum.Material.Neon
-			end
+		if p:IsA("BasePart") and data.Color then
+			p.Color = data.Color
+			p.Material = Enum.Material.Neon
 		end
 	end
 
 	if selected == "Mega" then
-		pet:SetPrimaryPartCFrame(pet:GetPrimaryPartCFrame()) -- reset position
+		pet:SetPrimaryPartCFrame(pet:GetPrimaryPartCFrame())
 		pet.PrimaryPart.Size *= 2
 		for _, part in ipairs(pet:GetDescendants()) do
 			if part:IsA("BasePart") then
@@ -186,10 +216,14 @@ mutateButton.MouseButton1Click:Connect(function()
 	statusLabel.Text = "Status: Applied " .. selected
 end)
 
--- Live Detection
+-- Auto Reapply Mutation if Pet is Placed
 RunService.Heartbeat:Connect(function()
 	local pet = getHeldPet()
 	if pet then
 		statusLabel.Text = "Status: Holding pet: " .. pet.Name
+		if pet:GetAttribute("MutationType") and not pet:GetAttribute("HasAppliedMutation") then
+			pet:SetAttribute("HasAppliedMutation", true)
+			applyStoredMutation(pet)
+		end
 	end
 end)
