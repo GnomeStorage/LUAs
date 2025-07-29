@@ -32,10 +32,16 @@ local particleIDs = {
 local selected = nil
 local mutatedModels = {}
 
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+-- Wait for PlayerGui to exist
+while not player:FindFirstChild("PlayerGui") do
+	task.wait()
+end
+
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PetMutatorUI"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 100
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 300, 0, 220)
