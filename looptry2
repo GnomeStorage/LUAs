@@ -1,0 +1,84 @@
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+-- Remove old UI if exists
+if gui:FindFirstChild("FakeDisconnectUI") then
+    gui.FakeDisconnectUI:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FakeDisconnectUI"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.Parent = gui
+
+-- Fullscreen invisible button blocking all input behind modal
+local blocker = Instance.new("TextButton")
+blocker.Size = UDim2.new(1, 0, 1, 0)
+blocker.Position = UDim2.new(0, 0, 0, 0)
+blocker.BackgroundTransparency = 1
+blocker.Text = ""
+blocker.AutoButtonColor = false
+blocker.Active = true
+blocker.Modal = true
+blocker.ZIndex = 1000
+blocker.Parent = screenGui
+
+-- Dark transparent overlay
+local overlay = Instance.new("Frame")
+overlay.Size = UDim2.new(1, 0, 1, 0)
+overlay.Position = UDim2.new(0, 0, 0, 0)
+overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+overlay.BackgroundTransparency = 0.5
+overlay.ZIndex = 1001
+overlay.Parent = screenGui
+
+-- Modal box
+local modal = Instance.new("Frame")
+modal.Size = UDim2.new(0.5, 0, 0.3, 0)
+modal.Position = UDim2.new(0.25, 0, 0.35, 0)
+modal.BackgroundColor3 = Color3.fromRGB(40,40,40)
+modal.ZIndex = 1002
+modal.Parent = screenGui
+
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(1, -20, 0.5, 0)
+text.Position = UDim2.new(0, 10, 0, 20)
+text.Text = "Would you like to inject scripts by BaconScripts?"
+text.TextColor3 = Color3.new(1, 1, 1)
+text.Font = Enum.Font.SourceSansBold
+text.TextScaled = true
+text.BackgroundTransparency = 1
+text.ZIndex = 1003
+text.Parent = modal
+
+local yesButton = Instance.new("TextButton")
+yesButton.Size = UDim2.new(0.45, 0, 0.25, 0)
+yesButton.Position = UDim2.new(0.05, 0, 0.6, 0)
+yesButton.Text = "Yes"
+yesButton.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+yesButton.TextColor3 = Color3.new(0, 0, 0)
+yesButton.Font = Enum.Font.SourceSansBold
+yesButton.TextScaled = true
+yesButton.ZIndex = 1003
+yesButton.Parent = modal
+
+local noButton = Instance.new("TextButton")
+noButton.Size = UDim2.new(0.45, 0, 0.25, 0)
+noButton.Position = UDim2.new(0.5, 0, 0.6, 0)
+noButton.Text = "No"
+noButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+noButton.TextColor3 = Color3.new(1, 1, 1)
+noButton.Font = Enum.Font.SourceSansBold
+noButton.TextScaled = true
+noButton.ZIndex = 1003
+noButton.Parent = modal
+
+noButton.MouseButton1Click:Connect(function()
+    -- Do nothing on No click
+end)
+
+yesButton.MouseButton1Click:Connect(function()
+    print("Yes clicked!")
+    screenGui:Destroy()
+end)
