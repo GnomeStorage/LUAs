@@ -1,0 +1,173 @@
+-- Fake Script Injector UI with spinner and modal lock
+-- Works in KRNL, Delta, Fluxus, etc.
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Modal blocker
+local function createModalBase()
+	local old = PlayerGui:FindFirstChild("FakeInjectorUI")
+	if old then old:Destroy() end
+
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "FakeInjectorUI"
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+	gui.ResetOnSpawn = false
+	gui.Parent = PlayerGui
+
+	local blocker = Instance.new("TextButton")
+	blocker.Size = UDim2.new(1, 0, 1, 0)
+	blocker.Position = UDim2.new(0, 0, 0, 0)
+	blocker.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	blocker.BackgroundTransparency = 0.6
+	blocker.Text = ""
+	blocker.AutoButtonColor = false
+	blocker.BorderSizePixel = 0
+	blocker.ZIndex = 1
+	blocker.Parent = gui
+
+	return gui
+end
+
+-- Spinner utility
+local function createSpinner(parent, size)
+	local spinner = Instance.new("ImageLabel")
+	spinner.Size = size or UDim2.new(0.25, 0, 0.25, 0)
+	spinner.AnchorPoint = Vector2.new(0.5, 0.5)
+	spinner.Position = UDim2.new(0.5, 0, 0.5, 0)
+	spinner.BackgroundTransparency = 1
+	spinner.Image = "rbxassetid://1095708" -- simple circle image
+	spinner.ZIndex = 3
+	spinner.Parent = parent
+
+	-- Rotation animation
+	local run = true
+	task.spawn(function()
+		while run and spinner do
+			spinner.Rotation += 5
+			task.wait(0.01)
+		end
+	end)
+
+	spinner.Destroying:Connect(function() run = false end)
+	return spinner
+end
+
+-- Prompt with Yes / No
+local function showPrompt(titleText, bodyText, yesCallback)
+	local gui = createModalBase()
+
+	local dialog = Instance.new("Frame")
+	dialog.Size = UDim2.new(0.4, 0, 0.25, 0)
+	dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
+	dialog.AnchorPoint = Vector2.new(0.5, 0.5)
+	dialog.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	dialog.BorderSizePixel = 0
+	dialog.ZIndex = 2
+	dialog.Parent = gui
+
+	local title = Instance.new("TextLabel", dialog)
+	title.Size = UDim2.new(1, 0, 0.3, 0)
+	title.Position = UDim2.new(0, 0, 0, 0)
+	title.BackgroundTransparency = 1
+	title.Text = titleText
+	title.Font = Enum.Font.SourceSansSemibold
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.TextScaled = true
+	title.ZIndex = 3
+
+	local body = Instance.new("TextLabel", dialog)
+	body.Size = UDim2.new(1, -20, 0.3, 0)
+	body.Position = UDim2.new(0, 10, 0.3, 0)
+	body.BackgroundTransparency = 1
+	body.Text = bodyText
+	body.Font = Enum.Font.SourceSans
+	body.TextColor3 = Color3.fromRGB(220, 220, 220)
+	body.TextScaled = true
+	body.TextWrapped = true
+	body.ZIndex = 3
+
+	local yesBtn = Instance.new("TextButton", dialog)
+	yesBtn.Size = UDim2.new(0.45, 0, 0.2, 0)
+	yesBtn.Position = UDim2.new(0.05, 0, 0.75, 0)
+	yesBtn.Text = "Yes"
+	yesBtn.Font = Enum.Font.SourceSansBold
+	yesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	yesBtn.BackgroundColor3 = Color3.fromRGB(70, 170, 70)
+	yesBtn.BorderSizePixel = 0
+	yesBtn.TextScaled = true
+	yesBtn.ZIndex = 3
+
+	local noBtn = Instance.new("TextButton", dialog)
+	noBtn.Size = UDim2.new(0.45, 0, 0.2, 0)
+	noBtn.Position = UDim2.new(0.5, 0, 0.75, 0)
+	noBtn.Text = "No"
+	noBtn.Font = Enum.Font.SourceSansBold
+	noBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	noBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 70)
+	noBtn.BorderSizePixel = 0
+	noBtn.TextScaled = true
+	noBtn.ZIndex = 3
+
+	-- parenting order
+	title.Parent = dialog
+	body.Parent = dialog
+	yesBtn.Parent = dialog
+	noBtn.Parent = dialog
+
+	yesBtn.MouseButton1Click:Connect(function()
+		gui:Destroy()
+		yesCallback()
+	end)
+
+	noBtn.MouseButton1Click:Connect(function()
+		-- do nothing
+	end)
+end
+
+-- Spinner wait
+local function showInjectingSpinner(nextStep)
+	local gui = createModalBase()
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0.3, 0, 0.2, 0)
+	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	frame.BorderSizePixel = 0
+	frame.ZIndex = 2
+	frame.Parent = gui
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -20, 0.5, 0)
+	label.Position = UDim2.new(0, 10, 0.25, 0)
+	label.BackgroundTransparency = 1
+	label.Text = "Injecting script, please wait momentarily..."
+	label.Font = Enum.Font.SourceSans
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextScaled = true
+	label.TextWrapped = true
+	label.ZIndex = 3
+	label.Parent = frame
+
+	createSpinner(frame, UDim2.new(0.2, 0, 0.2, 0))
+
+	task.wait(4)
+	gui:Destroy()
+	nextStep()
+end
+
+-- Loop logic
+local function startLoop()
+	showPrompt("Injecting Script", "Would you like to proceed?", function()
+		showInjectingSpinner(function()
+			showPrompt("Failed to Inject Script", "Would you like to try again?", function()
+				startLoop()
+			end)
+		end)
+	end)
+end
+
+-- Start it
+startLoop()
