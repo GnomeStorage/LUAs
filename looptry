@@ -1,157 +1,160 @@
 local Players = game:GetService("Players")
-
--- Wait for player and GUI
 local player = Players.LocalPlayer
-repeat wait() until player and player:FindFirstChildOfClass("PlayerGui")
-local gui = player:FindFirstChildOfClass("PlayerGui")
+local gui = player:WaitForChild("PlayerGui")
 
--- Create the GUI
+-- Clean up old GUI if it exists
+if gui:FindFirstChild("FakeDisconnectUI") then
+	gui.FakeDisconnectUI:Destroy()
+end
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "FakeDisconnectUI"
-screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = gui
 
--- Fullscreen dark overlay (blocks interaction)
-local overlay = Instance.new("TextButton")
+-- 🔒 Input blocker (even blocks Leave/Settings)
+local inputBlocker = Instance.new("TextButton")
+inputBlocker.Size = UDim2.new(1, 0, 1, 0)
+inputBlocker.Position = UDim2.new(0, 0, 0, 0)
+inputBlocker.BackgroundTransparency = 1
+inputBlocker.AutoButtonColor = false
+inputBlocker.Modal = true
+inputBlocker.Text = ""
+inputBlocker.ZIndex = 1
+inputBlocker.Parent = screenGui
+
+-- 🔲 Dark overlay
+local overlay = Instance.new("Frame")
 overlay.Size = UDim2.new(1, 0, 1, 0)
-overlay.Position = UDim2.new(0, 0, 0, 0)
 overlay.BackgroundColor3 = Color3.new(0, 0, 0)
 overlay.BackgroundTransparency = 0.4
-overlay.AutoButtonColor = false
-overlay.Modal = true -- 🔒 BLOCKS ALL INPUT BEHIND
-overlay.Text = ""
-overlay.ZIndex = 1
+overlay.ZIndex = 2
 overlay.Parent = screenGui
 
--- Injection UI Frame
-local injectFrame = Instance.new("Frame")
-injectFrame.Size = UDim2.new(0.5, 0, 0.2, 0)
-injectFrame.Position = UDim2.new(0.25, 0, 0.4, 0)
-injectFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-injectFrame.BorderSizePixel = 0
-injectFrame.ZIndex = 2
-injectFrame.Visible = false
-injectFrame.Parent = screenGui
+-- 💉 Injecting spinner UI
+local injectingFrame = Instance.new("Frame")
+injectingFrame.Size = UDim2.new(0.5, 0, 0.2, 0)
+injectingFrame.Position = UDim2.new(0.25, 0, 0.4, 0)
+injectingFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+injectingFrame.ZIndex = 3
+injectingFrame.BorderSizePixel = 0
+injectingFrame.Parent = screenGui
 
-local injectLabel = Instance.new("TextLabel")
-injectLabel.Size = UDim2.new(1, 0, 1, 0)
-injectLabel.BackgroundTransparency = 1
-injectLabel.Text = "Injecting script..."
-injectLabel.TextColor3 = Color3.new(1, 1, 1)
-injectLabel.Font = Enum.Font.SourceSansBold
-injectLabel.TextScaled = true
-injectLabel.ZIndex = 3
-injectLabel.Parent = injectFrame
+local injectingText = Instance.new("TextLabel")
+injectingText.Size = UDim2.new(1, 0, 1, 0)
+injectingText.BackgroundTransparency = 1
+injectingText.Text = "Injecting script..."
+injectingText.TextColor3 = Color3.new(1, 1, 1)
+injectingText.Font = Enum.Font.SourceSansBold
+injectingText.TextScaled = true
+injectingText.ZIndex = 4
+injectingText.Parent = injectingFrame
 
--- Spinner Image (optional, can remove if not visible on mobile)
+-- Optional spinner
 local spinner = Instance.new("ImageLabel")
 spinner.Size = UDim2.new(0, 40, 0, 40)
-spinner.Position = UDim2.new(0.5, -20, 0.7, -20)
+spinner.Position = UDim2.new(0.5, -20, 1, -50)
 spinner.BackgroundTransparency = 1
-spinner.Image = "rbxassetid://10493257496"
-spinner.ZIndex = 4
-spinner.Parent = injectFrame
+spinner.Image = "rbxassetid://10493257496" -- You can replace with any loading icon
+spinner.ZIndex = 5
+spinner.Parent = injectingFrame
 
--- Main prompt UI (after injection)
-local function showPrompt(msg)
-    injectFrame.Visible = false
+-- 💬 Function to show fake disconnect prompt
+local function showPrompt(message)
+	injectingFrame.Visible = false
 
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(0.55, 0, 0.3, 0)
-    box.Position = UDim2.new(0.225, 0, 0.35, 0)
-    box.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-    box.ZIndex = 5
-    box.Parent = screenGui
+	local promptFrame = Instance.new("Frame")
+	promptFrame.Size = UDim2.new(0.6, 0, 0.3, 0)
+	promptFrame.Position = UDim2.new(0.2, 0, 0.35, 0)
+	promptFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+	promptFrame.BorderSizePixel = 0
+	promptFrame.ZIndex = 6
+	promptFrame.Parent = screenGui
 
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0.25, 0)
-    title.Text = "Disconnected"
-    title.TextColor3 = Color3.new(1,1,1)
-    title.Font = Enum.Font.SourceSansBold
-    title.TextScaled = true
-    title.BackgroundTransparency = 1
-    title.ZIndex = 6
-    title.Parent = box
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0.3, 0)
+	title.Text = "Disconnected"
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Font = Enum.Font.SourceSansBold
+	title.TextScaled = true
+	title.BackgroundTransparency = 1
+	title.ZIndex = 7
+	title.Parent = promptFrame
 
-    local message = Instance.new("TextLabel")
-    message.Size = UDim2.new(1, -20, 0.25, 0)
-    message.Position = UDim2.new(0, 10, 0.3, 0)
-    message.Text = msg
-    message.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-    message.Font = Enum.Font.SourceSans
-    message.TextWrapped = true
-    message.TextScaled = true
-    message.BackgroundTransparency = 1
-    message.ZIndex = 6
-    message.Parent = box
+	local body = Instance.new("TextLabel")
+	body.Size = UDim2.new(1, -20, 0.3, 0)
+	body.Position = UDim2.new(0, 10, 0.3, 0)
+	body.Text = message
+	body.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+	body.Font = Enum.Font.SourceSans
+	body.TextWrapped = true
+	body.TextScaled = true
+	body.BackgroundTransparency = 1
+	body.ZIndex = 7
+	body.Parent = promptFrame
 
-    local yesBtn = Instance.new("TextButton")
-    yesBtn.Size = UDim2.new(0.4, 0, 0.2, 0)
-    yesBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
-    yesBtn.Text = "Yes"
-    yesBtn.TextColor3 = Color3.new(0, 0, 0)
-    yesBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    yesBtn.Font = Enum.Font.SourceSansBold
-    yesBtn.TextScaled = true
-    yesBtn.ZIndex = 6
-    yesBtn.Parent = box
+	local yesBtn = Instance.new("TextButton")
+	yesBtn.Size = UDim2.new(0.45, 0, 0.2, 0)
+	yesBtn.Position = UDim2.new(0.05, 0, 0.75, 0)
+	yesBtn.Text = "Yes"
+	yesBtn.TextColor3 = Color3.new(0, 0, 0)
+	yesBtn.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+	yesBtn.Font = Enum.Font.SourceSansBold
+	yesBtn.TextScaled = true
+	yesBtn.ZIndex = 7
+	yesBtn.Parent = promptFrame
 
-    local noBtn = Instance.new("TextButton")
-    noBtn.Size = UDim2.new(0.4, 0, 0.2, 0)
-    noBtn.Position = UDim2.new(0.5, 10, 0.75, 0)
-    noBtn.Text = "No"
-    noBtn.TextColor3 = Color3.new(1, 1, 1)
-    noBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    noBtn.Font = Enum.Font.SourceSansBold
-    noBtn.TextScaled = true
-    noBtn.ZIndex = 6
-    noBtn.Parent = box
+	local noBtn = Instance.new("TextButton")
+	noBtn.Size = UDim2.new(0.45, 0, 0.2, 0)
+	noBtn.Position = UDim2.new(0.5, 0, 0.75, 0)
+	noBtn.Text = "No"
+	noBtn.TextColor3 = Color3.new(1, 1, 1)
+	noBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	noBtn.Font = Enum.Font.SourceSansBold
+	noBtn.TextScaled = true
+	noBtn.ZIndex = 7
+	noBtn.Parent = promptFrame
 
-    yesBtn.MouseButton1Click:Connect(function()
-        box:Destroy()
-        injectFrame.Visible = true
-        injectLabel.Text = "Injecting script..."
+	yesBtn.MouseButton1Click:Connect(function()
+		promptFrame:Destroy()
+		injectingFrame.Visible = true
+		injectingText.Text = "Injecting script..."
+		spinner.Rotation = 0
 
-        -- Restart spinner
-        spinner.Rotation = 0
-        local spinning = true
-        spawn(function()
-            while spinning do
-                spinner.Rotation = spinner.Rotation + 10
-                wait(0.05)
-            end
-        end)
+		local spin = true
+		spawn(function()
+			while spin do
+				spinner.Rotation += 10
+				task.wait(0.05)
+			end
+		end)
 
-        wait(5)
-        spinning = false
+		task.wait(5)
+		spin = false
 
-        local reasons = {
-            "Failed to inject script. Want to try again?",
-            "Slow internet connection. Want to reconnect?"
-        }
-        showPrompt(reasons[math.random(1, #reasons)])
-    end)
+		local reasons = {
+			"Failed to inject script. Want to try again?",
+			"Slow internet connection. Want to reconnect?"
+		}
+		showPrompt(reasons[math.random(1, #reasons)])
+	end)
 
-    noBtn.MouseButton1Click:Connect(function()
-        -- Do nothing — stay on modal
-    end)
+	noBtn.MouseButton1Click:Connect(function()
+		-- Do nothing, stay on modal
+	end)
 end
 
--- Begin process
-injectFrame.Visible = true
-
--- Spinner rotation animation
+-- 🕓 Spinner animation
 spawn(function()
-    while true do
-        spinner.Rotation = spinner.Rotation + 10
-        wait(0.05)
-    end
+	while true do
+		spinner.Rotation += 10
+		task.wait(0.05)
+	end
 end)
 
-wait(5) -- Show this first
-injectFrame.Visible = false
-
--- Now show the fake disconnect modal
+-- 🕔 Wait 5s then show prompt
+task.wait(5)
+injectingFrame.Visible = false
 showPrompt("Would you like to inject scripts by BaconScripts?")
