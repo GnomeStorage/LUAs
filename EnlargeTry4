@@ -2,18 +2,17 @@
 
 local scale = 3  -- Scaling factor for enlarging the pet
 
--- Find the player's character
+-- Ensure player character is loaded
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 
--- Check if the character has a "RightHand" or "LeftHand" attachment for pets
+-- Check for the held pet in the character (RightHand or LeftHand)
 local rightHand = character:FindFirstChild("RightHand")
 local leftHand = character:FindFirstChild("LeftHand")
 
--- Determine if the player is holding a pet
 local heldPet = nil
 
--- Check if the pet is in the RightHand or LeftHand
+-- Try to find the pet in either the right or left hand
 if rightHand and rightHand:FindFirstChild("Pet") then
     heldPet = rightHand.Pet
 elseif leftHand and leftHand:FindFirstChild("Pet") then
@@ -25,26 +24,24 @@ if not heldPet then
     return
 end
 
--- Scale the held pet
+-- Scale the held pet if it is a Model
 if heldPet:IsA("Model") then
-    -- Ensure the pet has a PrimaryPart for proper scaling
     if heldPet.PrimaryPart then
-        -- Scale each part of the model
+        -- Scale each part of the pet model
         for _, part in ipairs(heldPet:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.Size = part.Size * scale
-                -- Adjust the position slightly to avoid clipping
-                part.Position = part.Position * 1.1
+                part.Position = part.Position * 1.1  -- Optional: adjust position to avoid clipping
             elseif part:IsA("SpecialMesh") then
                 part.Scale = part.Scale * scale
             end
         end
-        -- Optionally, update the PrimaryPart's CFrame
+        -- Ensure the pet's PrimaryPart is updated properly after scaling
         heldPet:SetPrimaryPartCFrame(heldPet.PrimaryPart.CFrame)
         print("Pet enlarged!")
     else
-        print("Held pet does not have a PrimaryPart.")
+        print("Held pet doesn't have a PrimaryPart.")
     end
 else
-    print("Held item is not a pet model.")
+    print("Held object is not a pet model.")
 end
