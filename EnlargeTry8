@@ -1,60 +1,46 @@
--- Mobile and Executor Compatible: Enlarge Held Pet UI Script
+-- Create a simple UI and Scale Held Pet Script (Mobile & Executor Compatible)
 
-local scale = 3  -- Scaling factor for enlarging the pet
+local scale = 3  -- Scaling factor
 
--- Ensure PlayerGui exists
+-- Create UI
 local player = game.Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
 
--- Create ScreenGui to hold the UI
-local sGui = Instance.new("ScreenGui", gui)
-sGui.Name = "PetEnlargerUI"
-sGui.ResetOnSpawn = false
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = gui
 
--- Create Frame for the button
-local frame = Instance.new("Frame", sGui)
-frame.Size = UDim2.new(0, 250, 0, 100)
-frame.Position = UDim2.new(0.5, -125, 0.5, -50)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-
--- Create "Enlarge Pet" button
-local button = Instance.new("TextButton", frame)
-button.Size = UDim2.new(1, -20, 0, 50)
-button.Position = UDim2.new(0, 10, 0.5, -25)
+local button = Instance.new("TextButton")
+button.Parent = screenGui
+button.Size = UDim2.new(0, 250, 0, 50)
+button.Position = UDim2.new(0.5, -125, 0.5, -25)
+button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 button.Text = "Enlarge Pet"
 button.TextSize = 24
-button.Font = Enum.Font.GothamBold
-button.TextColor3 = Color3.new(1, 1, 1)
-button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Function to enlarge the held pet
-local function enlargePet()
-    -- Ensure the player's character is loaded
+local function enlargeHeldPet()
     local character = player.Character or player.CharacterAdded:Wait()
-
-    -- Check for RightHand or LeftHand
     local rightHand = character:FindFirstChild("RightHand")
     local leftHand = character:FindFirstChild("LeftHand")
 
     local heldPet = nil
 
-    -- Look for a pet in RightHand or LeftHand
+    -- Look for the pet in either RightHand or LeftHand
     if rightHand and rightHand:FindFirstChild("Pet") then
         heldPet = rightHand.Pet
     elseif leftHand and leftHand:FindFirstChild("Pet") then
         heldPet = leftHand.Pet
     end
 
-    -- If no pet is held, return and print a message
     if not heldPet then
         print("No pet is being held.")
         return
     end
 
-    -- Ensure the pet has a PrimaryPart (essential for scaling)
+    -- Make sure the pet has a PrimaryPart before scaling
     if not heldPet.PrimaryPart then
-        print("Held pet doesn't have a PrimaryPart.")
+        print("The pet doesn't have a PrimaryPart.")
         return
     end
 
@@ -62,21 +48,17 @@ local function enlargePet()
     if heldPet:IsA("Model") then
         for _, part in ipairs(heldPet:GetDescendants()) do
             if part:IsA("BasePart") then
-                -- Scale size and adjust position to avoid clipping
                 part.Size = part.Size * scale
-                part.Position = part.Position * 1.1  -- Slightly adjust position
             elseif part:IsA("SpecialMesh") then
                 part.Scale = part.Scale * scale
             end
         end
 
-        -- Update the PrimaryPart's position after scaling
+        -- Ensure the PrimaryPart's position is updated after scaling
         heldPet:SetPrimaryPartCFrame(heldPet.PrimaryPart.CFrame)
         print("Pet enlarged!")
-    else
-        print("Held object is not a pet model.")
     end
 end
 
--- Connect the button to enlarge the pet when clicked or tapped
-button.MouseButton1Click:Connect(enlargePet)
+-- Button click event
+button.MouseButton1Click:Connect(enlargeHeldPet)
