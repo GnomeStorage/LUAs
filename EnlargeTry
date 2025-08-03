@@ -1,0 +1,48 @@
+-- Delta Executor Compatible: Enlarge Pets UI Script
+
+local plr = game.Players.LocalPlayer
+local gui = plr:FindFirstChild("PlayerGui")
+
+-- Make sure we can build the UI
+if not gui then return end
+
+-- GUI Setup
+local sGui = Instance.new("ScreenGui", gui)
+sGui.Name = "PetEnlargerUI"
+sGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", sGui)
+frame.Size = UDim2.new(0, 250, 0, 100)
+frame.Position = UDim2.new(0.5, -125, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(1, -20, 0, 50)
+button.Position = UDim2.new(0, 10, 0.5, -25)
+button.Text = "Enlarge"
+button.TextSize = 24
+button.Font = Enum.Font.GothamBold
+button.TextColor3 = Color3.new(1, 1, 1)
+button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+button.Name = "EnlargeButton"
+
+-- Pet Scaling Logic
+button.MouseButton1Click:Connect(function()
+    local scale = 3
+    local petFolder = workspace:FindFirstChild("Pets") or plr.Character
+
+    if not petFolder then return end
+
+    for _, model in ipairs(petFolder:GetChildren()) do
+        if model:IsA("Model") then
+            for _, part in ipairs(model:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Size *= scale
+                elseif part:IsA("SpecialMesh") then
+                    part.Scale *= scale
+                end
+            end
+        end
+    end
+end)
