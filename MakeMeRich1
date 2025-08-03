@@ -2,10 +2,11 @@
 local function addMoney()
     local player = game.Players.LocalPlayer
     
-    -- Find the TextLabel where the money is displayed
-    local moneyLabel = player.PlayerGui:WaitForChild("ScreenGui"):WaitForChild("MoneyLabel") -- Replace with actual path if different
+    -- Make sure there's a ScreenGui and MoneyLabel in the PlayerGui
+    local screenGui = player.PlayerGui:WaitForChild("ScreenGui")  -- Ensure you have a ScreenGui in your PlayerGui
+    local moneyLabel = screenGui:WaitForChild("MoneyLabel")  -- Replace with the actual name of your money label
 
-    -- Get the current value from the displayed label and update it
+    -- Get the current value of the money from the TextLabel and add 1 quadrillion
     local currentMoney = tonumber(moneyLabel.Text:match("([%,0-9]+)")) or 0
     local newMoney = currentMoney + 1000000000000000  -- Add 1 quadrillion to the current value
 
@@ -18,7 +19,7 @@ local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 200, 0, 50)
 button.Position = UDim2.new(0.5, -100, 0.8, 0)
 button.Text = "MAKE ME RICH"
-button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Make sure you have a ScreenGui
+button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Make sure you have a ScreenGui set up for this
 
 -- When the button is clicked, call the addMoney function
 button.MouseButton1Click:Connect(addMoney)
