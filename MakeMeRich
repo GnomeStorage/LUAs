@@ -1,0 +1,37 @@
+-- Function to add money
+local function addMoney()
+    local player = game.Players.LocalPlayer
+    local leaderstats = player:WaitForChild("leaderstats")
+    local money = leaderstats:WaitForChild("Money") -- Change this to your actual currency name
+
+    -- Increment the currency by 1 quadrillion
+    money.Value = money.Value + 1000000000000000
+    
+    -- Play sound effect
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://1234567890"  -- Replace with your chosen sound asset ID
+    sound.Parent = player.Character or player:WaitForChild("HumanoidRootPart")
+    sound:Play()
+end
+
+-- Create the button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.8, 0)
+button.Text = "MAKE ME RICH"
+button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Assuming you have a ScreenGui already
+
+-- When the button is clicked, call the addMoney function
+button.MouseButton1Click:Connect(addMoney)
+
+-- Ensure player has the leaderstats and Money value
+game.Players.PlayerAdded:Connect(function(player)
+    local leaderstats = Instance.new("Folder")
+    leaderstats.Name = "leaderstats"
+    leaderstats.Parent = player
+
+    local money = Instance.new("IntValue")
+    money.Name = "Money"
+    money.Parent = leaderstats
+    money.Value = 0 -- Starting amount of money
+end)
