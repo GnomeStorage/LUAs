@@ -1,110 +1,183 @@
--- Fake "Grow a Garden" Pet Enlargement Script
--- Inspired by GER COMMANDO/CHROLINKZHUB.DEV visuals
+--[[
+    Grow a Garden Pet Enlargement Script
+    Compatible with Delta, Krnl, Synapse X
+    Inspired by CHROLINKZHUB.DEV visuals
+]]
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+if not game:IsLoaded() then game.Loaded:Wait() end
+if not game:GetService("Players").LocalPlayer then game:GetService("Players").PlayerAdded:Wait() end
+
+local Player = game:GetService("Players").LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
 local TweenService = game:GetService("TweenService")
 
--- Fake command handler
-local function handleEnlargeCommand(player, petName)
-    -- Check if player has the pet
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+-- Customizable settings
+local ENLARGE_SCALE = 1.5 -- How much to enlarge pets (1.5 = 150% size)
+local EFFECT_COLOR = Color3.fromRGB(0, 255, 255) -- Light magic blue from your image
+local COMMAND_PREFIX = ";" -- Change to your preferred prefix
+
+-- Create GUI for feedback
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GrowAGardenGUI"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local Notification = Instance.new("Frame")
+Notification.Name = "Notification"
+Notification.Size = UDim2.new(0, 300, 0, 80)
+Notification.Position = UDim2.new(0.5, -150, 0.8, -40)
+Notification.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Notification.BackgroundTransparency = 0.3
+Notification.BorderSizePixel = 0
+Notification.Visible = false
+Notification.Parent = ScreenGui
+
+local NotifText = Instance.new("TextLabel")
+NotifText.Name = "Text"
+NotifText.Size = UDim2.new(1, -20, 1, -20)
+NotifText.Position = UDim2.new(0, 10, 0, 10)
+NotifText.BackgroundTransparency = 1
+NotifText.TextColor3 = EFFECT_COLOR
+NotifText.Font = Enum.Font.SciFi
+NotifText.TextSize = 18
+NotifText.TextStrokeTransparency = 0.7
+NotifText.TextXAlignment = Enum.TextXAlignment.Left
+NotifText.TextYAlignment = Enum.TextYAlignment.Top
+NotifText.TextWrapped = true
+NotifText.Parent = Notification
+
+local function showNotification(message, duration)
+    NotifText.Text = "GER COMMANDO SYSTEM\n" .. message
+    Notification.Visible = true
     
-    -- Find nearby pets
-    for _, child in pairs(workspace:GetChildren()) do
-        if child:FindFirstChild("IsPet") and child.Name == petName then
-            -- Fake visual effects
-            local glow = Instance.new("Part")
-            glow.Size = Vector3.new(5, 5, 5)
-            glow.Position = child:GetPivot().Position
-            glow.Anchored = true
-            glow.CanCollide = false
-            glow.Material = Enum.Material.Neon
-            glow.Color = Color3.fromRGB(0, 255, 255) -- Light magic blue
-            glow.Shape = Enum.PartType.Ball
-            glow.Parent = workspace
-            
-            -- Fake particle effect
-            local particles = Instance.new("ParticleEmitter")
-            particles.Texture = "rbxassetid://242806287" -- Sparkle texture
-            particles.LightEmission = 1
-            particles.Parent = glow
-            
-            -- Tween for enlargement effect
-            local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quint)
-            local scaleTween = TweenService:Create(
-                child,
-                tweenInfo,
-                {Size = child.Size * 1.5} -- 50% larger
-            )
-            
-            -- Fake "EDS" effect (from your second image)
-            local edsTag = Instance.new("BillboardGui")
-            edsTag.Size = UDim2.new(4, 0, 4, 0)
-            edsTag.StudsOffset = Vector3.new(0, 3, 0)
-            edsTag.Adornee = child
-            edsTag.Parent = child
-            
-            local edsText = Instance.new("TextLabel")
-            edsText.Text = "EDS\nENLARGED"
-            edsText.Size = UDim2.new(1, 0, 1, 0)
-            edsText.BackgroundTransparency = 1
-            edsText.TextColor3 = Color3.new(1, 1, 1)
-            edsText.Font = Enum.Font.SciFi
-            edsText.TextScaled = true
-            edsText.Parent = edsTag
-            
-            scaleTween:Play()
-            
-            -- Cleanup after effect
-            delay(5, function()
-                glow:Destroy()
-            end)
-            
-            return true
-        end
-    end
-    return false
+    task.spawn(function()
+        task.wait(duration or 3)
+        Notification.Visible = false
+    end)
 end
 
--- Fake chat command (like in your images)
-Players.PlayerAdded:Connect(function(player)
-    player.Chatted:Connect(function(message)
-        if message:lower():sub(1, 8) == "enlarge " then
-            local petName = message:sub(9)
-            local success = handleEnlargeCommand(player, petName)
-            
-            if success then
-                -- Fake notification
-                local notification = Instance.new("BillboardGui")
-                notification.Size = UDim2.new(10, 0, 2, 0)
-                notification.StudsOffset = Vector3.new(0, 5, 0)
-                notification.Adornee = player.Character:WaitForChild("HumanoidRootPart")
-                notification.Parent = player.Character.HumanoidRootPart
-                
-                local label = Instance.new("TextLabel")
-                label.Text = "GER COMMANDO ACTIVATED!\n"..petName.." ENLARGED!"
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.new(0, 1, 1)
-                label.Font = Enum.Font.SciFi
-                label.TextScaled = true
-                label.Parent = notification
-                
-                delay(3, function()
-                    notification:Destroy()
-                end)
+-- Core enlargement function
+local function enlargePet(pet)
+    if not pet or not pet:FindFirstChildOfClass("BasePart") then return end
+    
+    -- Create EDS tag (from your reference image)
+    local edsTag = Instance.new("BillboardGui")
+    edsTag.Name = "EDSTag"
+    edsTag.Size = UDim2.new(0, 200, 0, 60)
+    edsTag.StudsOffset = Vector3.new(0, 3, 0)
+    edsTag.Adornee = pet:FindFirstChildOfClass("BasePart")
+    edsTag.AlwaysOnTop = true
+    edsTag.Parent = pet
+    
+    local edsText = Instance.new("TextLabel")
+    edsText.Name = "EDSText"
+    edsText.Size = UDim2.new(1, 0, 1, 0)
+    edsText.BackgroundTransparency = 1
+    edsText.Text = "EDS\nENLARGED"
+    edsText.TextColor3 = EFFECT_COLOR
+    edsText.Font = Enum.Font.SciFi
+    edsText.TextSize = 24
+    edsText.TextStrokeTransparency = 0.5
+    edsText.Parent = edsTag
+    
+    -- Create light magic effect (from your reference)
+    local glow = Instance.new("Part")
+    glow.Name = "LightMagicOver"
+    glow.Size = Vector3.new(5, 5, 5)
+    glow.Position = pet:GetPivot().Position
+    glow.Anchored = true
+    glow.CanCollide = false
+    glow.Material = Enum.Material.Neon
+    glow.Color = EFFECT_COLOR
+    glow.Shape = Enum.PartType.Ball
+    glow.Transparency = 0.7
+    glow.Parent = workspace
+    
+    local particles = Instance.new("ParticleEmitter")
+    particles.Texture = "rbxassetid://242806287"
+    particles.LightEmission = 1
+    particles.Color = ColorSequence.new(EFFECT_COLOR)
+    particles.Size = NumberSequence.new(0.5)
+    particles.Lifetime = NumberRange.new(1)
+    particles.Speed = NumberRange.new(5)
+    particles.Parent = glow
+    
+    -- Tween for smooth enlargement
+    for _, part in pairs(pet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Quint)
+            local tween = TweenService:Create(part, tweenInfo, {
+                Size = part.Size * ENLARGE_SCALE,
+            })
+            tween:Play()
+        end
+    end
+    
+    -- Cleanup after 10 seconds
+    delay(10, function()
+        glow:Destroy()
+        edsTag:Destroy()
+    end)
+    
+    return true
+end
+
+-- Command handler
+local function handleCommand(input)
+    local cmd = input:lower()
+    
+    if cmd:sub(1, 8) == "enlarge " then
+        local petName = cmd:sub(9)
+        local foundPet = nil
+        
+        -- Search workspace for pets
+        for _, obj in pairs(workspace:GetChildren()) do
+            if obj.Name:lower():find(petName:lower()) and obj:FindFirstChildOfClass("Humanoid") then
+                foundPet = obj
+                break
             end
         end
-    end)
+        
+        if foundPet then
+            showNotification("ENLARGING " .. foundPet.Name:upper(), 2)
+            enlargePet(foundPet)
+            showNotification(foundPet.Name:upper() .. " ENLARGED!\nCHROLINKZHUB.DEV", 3)
+        else
+            showNotification("PET NOT FOUND!\nTRY ;enlarge [name]", 3)
+        end
+    elseif cmd == "cmds" then
+        showNotification("GER COMMANDO SYSTEM\nCommands:\n;enlarge [pet]\n;cmds", 5)
+    end
+end
+
+-- Set up chat hook
+local ChatHook
+ChatHook = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    
+    if method == "FireServer" and tostring(self) == "SayMessageRequest" then
+        local message = args[1]
+        if message:sub(1, 1) == COMMAND_PREFIX then
+            handleCommand(message:sub(2))
+            return
+        end
+    end
+    
+    return ChatHook(self, ...)
 end)
 
--- Fake remote event (to simulate backend functionality)
-local fakeRemote = Instance.new("RemoteEvent")
-fakeRemote.Name = "LightMagicOverCommando" -- Reference from your image
-fakeRemote.Parent = ReplicatedStorage
+-- Initial notification
+showNotification("LIGHT MAGIC OVER COMMANDO\nSystem loaded! Type ;cmds", 5)
 
-print("Fake Grow a Garden enlargement system loaded")
-print("CHROLINKZHUB.DEV inspired system active") -- Reference from your image
-print("Light magic OVER COMMANDO protocol initiated") -- Reference from your image
+print([[
+
+   _____ ____  ____  _____   ____  _____  ______ _____ 
+  / ____/ __ \|  _ \|  __ \ / __ \|  __ \|  ____|  __ \
+ | |   | |  | | |_) | |__) | |  | | |__) | |__  | |  | |
+ | |   | |  | |  _ <|  _  /| |  | |  _  /|  __| | |  | |
+ | |___| |__| | |_) | | \ \| |__| | | \ \| |____| |__| |
+  \_____\____/|____/|_|  \_\\____/|_|  \_\______|_____/
+  
+  GER COMMANDO SYSTEM ACTIVE
+  CHROLINKZHUB.DEV
+]])
