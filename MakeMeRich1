@@ -1,0 +1,24 @@
+-- Function to add money (shekels) visually
+local function addMoney()
+    local player = game.Players.LocalPlayer
+    
+    -- Find the TextLabel where the money is displayed
+    local moneyLabel = player.PlayerGui:WaitForChild("ScreenGui"):WaitForChild("MoneyLabel") -- Replace with actual path if different
+
+    -- Get the current value from the displayed label and update it
+    local currentMoney = tonumber(moneyLabel.Text:match("([%,0-9]+)")) or 0
+    local newMoney = currentMoney + 1000000000000000  -- Add 1 quadrillion to the current value
+
+    -- Update the TextLabel to show the new value
+    moneyLabel.Text = string.format("%0.0f", newMoney):gsub("(%d)(%d%d%d)", "%1,%2") .. "¢"  -- Format with commas and add currency symbol
+end
+
+-- Create the button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.8, 0)
+button.Text = "MAKE ME RICH"
+button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Make sure you have a ScreenGui
+
+-- When the button is clicked, call the addMoney function
+button.MouseButton1Click:Connect(addMoney)
