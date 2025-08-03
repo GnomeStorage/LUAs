@@ -1,4 +1,4 @@
--- Delta Executor & Mobile Compatible: Enlarge Held Pet UI Script
+-- Delta Executor & Mobile Compatible: Enlarge Held Pet UI Script with Debugging
 
 local scale = 3  -- Scaling factor for enlarging the pet
 
@@ -39,16 +39,23 @@ local function enlargePet()
 
     local heldPet = nil
 
+    -- Debugging: Print whether hands are found
+    print("Checking RightHand and LeftHand...")
+
     -- Check if the pet is in the RightHand or LeftHand
     if rightHand then
+        print("RightHand found!")
         if rightHand:FindFirstChild("Pet") then
             heldPet = rightHand.Pet
+            print("Pet found in RightHand!")
         end
     end
 
     if leftHand then
+        print("LeftHand found!")
         if leftHand:FindFirstChild("Pet") then
             heldPet = leftHand.Pet
+            print("Pet found in LeftHand!")
         end
     end
 
@@ -58,10 +65,12 @@ local function enlargePet()
         return
     end
 
-    -- Scale the held pet if it's a model
-    if heldPet:IsA("Model") then
-        if heldPet.PrimaryPart then
-            -- Scale each part of the pet model
+    -- Check if the held pet has a PrimaryPart
+    if heldPet.PrimaryPart then
+        print("PrimaryPart found, scaling pet...")
+        
+        -- Scale the held pet if it's a model
+        if heldPet:IsA("Model") then
             for _, part in ipairs(heldPet:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.Size = part.Size * scale
@@ -74,10 +83,10 @@ local function enlargePet()
             heldPet:SetPrimaryPartCFrame(heldPet.PrimaryPart.CFrame)
             print("Pet enlarged!")
         else
-            print("Held pet doesn't have a PrimaryPart.")
+            print("Held object is not a pet model.")
         end
     else
-        print("Held object is not a pet model.")
+        print("Held pet doesn't have a PrimaryPart.")
     end
 end
 
