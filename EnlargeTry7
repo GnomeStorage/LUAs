@@ -1,0 +1,182 @@
+-- Clean Pet Enlarger UI
+-- No visual glitches, consistent scaling
+-- Executor-Compatible (Delta/Krnl/Synapse)
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local TweenService = game:GetService("TweenService")
+
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CleanPetEnlarger"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Position = UDim2.new(0.75, 0, 0.5, -140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+-- Header (matches your SEEDS/N/SELL layout)
+local Header = Instance.new("TextLabel")
+Header.Size = UDim2.new(1, 0, 0, 60)
+Header.Position = UDim2.new(0, 0, 0, 0)
+Header.BackgroundTransparency = 1
+Header.Text = "SEEDS\nN\nSELL"
+Header.Font = Enum.Font.SciFi
+Header.TextSize = 16
+Header.TextColor3 = Color3.new(1, 1, 1)
+Header.TextXAlignment = Enum.TextXAlignment.Left
+Header.Parent = MainFrame
+
+-- Enlarge Button
+local EnlargeButton = Instance.new("TextButton")
+EnlargeButton.Size = UDim2.new(0.9, 0, 0, 40)
+EnlargeButton.Position = UDim2.new(0.05, 0, 0.25, 0)
+EnlargeButton.BackgroundColor3 = Color3.fromRGB(0, 150, 150)
+EnlargeButton.TextColor3 = Color3.new(1, 1, 1)
+EnlargeButton.Font = Enum.Font.SciFi
+EnlargeButton.TextSize = 18
+EnlargeButton.Text = "ENLARGE"
+EnlargeButton.Parent = MainFrame
+
+-- Pet Info Display
+local PetInfo = Instance.new("TextLabel")
+PetInfo.Size = UDim2.new(0.9, 0, 0, 120)
+PetInfo.Position = UDim2.new(0.05, 0, 0.4, 0)
+PetInfo.BackgroundTransparency = 1
+PetInfo.Text = "Hold a pet to enlarge"
+PetInfo.Font = Enum.Font.SciFi
+PetInfo.TextSize = 16
+PetInfo.TextColor3 = Color3.new(1, 1, 1)
+PetInfo.TextXAlignment = Enum.TextXAlignment.Left
+PetInfo.TextYAlignment = Enum.TextYAlignment.Top
+PetInfo.TextWrapped = true
+PetInfo.Parent = MainFrame
+
+-- Status Label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0.9, 0, 0, 30)
+StatusLabel.Position = UDim2.new(0.05, 0, 0.8, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = ""
+StatusLabel.Font = Enum.Font.SciFi
+StatusLabel.TextSize = 18
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+StatusLabel.Parent = MainFrame
+
+-- Store original sizes
+local originalSizes = {}
+
+local function cleanEnlargePet()
+    -- Find held pet
+    local heldPet = nil
+    for _, tool in ipairs(Character:GetChildren()) do
+        if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+            heldPet = tool
+            break
+        end
+    end
+
+    if not heldPet then
+        PetInfo.Text = "No pet equipped"
+        StatusLabel.Text = "Hold a pet first"
+        task.wait(1.5)
+        StatusLabel.Text = ""
+        return
+    end
+
+    -- Clear previous sizes
+    originalSizes = {}
+
+    -- Store original sizes
+    for _, part in ipairs(heldPet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            originalSizes[part] = part.Size
+        end
+    end
+
+    -- Calculate new weight (consistent formula)
+    local baseWeight = math.random(3, 5) + math.random()
+    local newWeight = math.floor((baseWeight * 1.8) * 100) / 100
+
+    -- Update UI
+    EnlargeButton.Text = "WORKING..."
+    PetInfo.Text = string.format("%s\n[%.2f KG] [Age 22]", heldPet.Name, newWeight)
+    StatusLabel.Text = "ENLARGED!"
+
+    -- Clean scaling (no corruption effects)
+    for _, part in ipairs(heldPet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local scale = 1.8 -- Consistent scale factor
+            
+            -- Slightly larger scaling for main body parts
+            if part.Name:lower():find("head") or part.Name:lower():find("torso") then
+                scale = 1.9
+            elseif part.Name:lower():find("leg") or part.Name:lower():find("arm") then
+                scale = 1.7
+            end
+            
+            local tween = TweenService:Create(part, TweenInfo.new(1.2, Enum.EasingStyle.Quad), {
+                Size = part.Size * scale
+            })
+            tween:Play()
+        end
+    end
+
+    -- Reset after delay
+    task.delay(10, function()
+        -- Return to normal size
+        for part, size in pairs(originalSizes) do
+            if part and part.Parent then
+                local tween = TweenService:Create(part, TweenInfo.new(1), {
+                    Size = size
+                })
+                tween:Play()
+            end
+        end
+        
+        -- Reset UI
+        EnlargeButton.Text = "ENLARGE"
+        PetInfo.Text = "Hold a pet to enlarge"
+        StatusLabel.Text = ""
+    end)
+end
+
+-- Connect button
+EnlargeButton.MouseButton1Click:Connect(cleanEnlargePet)
+
+-- Make UI draggable
+local dragging = false
+local dragInput, dragStart, startPos
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        local delta = input.Position - dragStart
+        MainFrame.Position = startPos + UDim2.new(0, delta.X, 0, delta.Y)
+    end
+end)
+
+print("Clean Pet Enlarger loaded!")
