@@ -30,18 +30,29 @@ button.Name = "EnlargeButton"
 -- Pet Scaling Logic
 button.MouseButton1Click:Connect(function()
     local scale = 3
-    local petFolder = workspace:FindFirstChild("Pets") or plr.Character
+    -- Look for pets in the workspace or player's character
+    local petFolder = workspace:FindFirstChild("Pets") or plr.Character:FindFirstChild("Pets") or plr.Character
 
     if not petFolder then return end
 
     for _, model in ipairs(petFolder:GetChildren()) do
         if model:IsA("Model") then
-            for _, part in ipairs(model:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Size *= scale
-                elseif part:IsA("SpecialMesh") then
-                    part.Scale *= scale
+            -- Ensure the model has a PrimaryPart for proper scaling
+            if model.PrimaryPart then
+                -- Scale each part within the model
+                for _, part in ipairs(model:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Size = part.Size * scale
+                        -- Ensure position is updated as well to prevent clipping
+                        part.Position = part.Position * 1.1 -- Move slightly for better positioning
+                    elseif part:IsA("SpecialMesh") then
+                        part.Scale = part.Scale * scale
+                    end
                 end
+                -- Optionally, update the PrimaryPart's CFrame for the model
+                model:SetPrimaryPartCFrame(model.PrimaryPart.CFrame)
+            else
+                warn("Pet model doesn't have a PrimaryPart.")
             end
         end
     end
