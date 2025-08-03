@@ -1,0 +1,79 @@
+-- Final Version for Grow a Garden: Enlarge Held Pet UI Script (Mobile & Executor Compatible)
+
+local scale = 3  -- Scaling factor for enlarging the pet
+
+-- Create a simple UI Button for enlarging the pet
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+-- Create ScreenGui to hold the UI elements
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = gui
+
+-- Create a Button UI
+local button = Instance.new("TextButton")
+button.Parent = screenGui
+button.Size = UDim2.new(0, 250, 0, 50)
+button.Position = UDim2.new(0.5, -125, 0.5, -25)
+button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+button.Text = "Enlarge Pet"
+button.TextSize = 24
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Function to enlarge the held pet (either in hands or backpack)
+local function enlargeHeldPet()
+    -- Ensure the player's character is loaded
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    -- Look for the pet tool or model in the player's hands
+    local petTool = nil
+
+    -- Check if the pet tool is in the player's Backpack
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name == "Pet" then
+                petTool = tool
+                break
+            end
+        end
+    end
+
+    -- Look for pet in the RightHand or LeftHand if it's not in the Backpack
+    if not petTool then
+        local rightHand = character:FindFirstChild("RightHand")
+        local leftHand = character:FindFirstChild("LeftHand")
+        if rightHand and rightHand:FindFirstChild("Pet") then
+            petTool = rightHand.Pet
+        elseif leftHand and leftHand:FindFirstChild("Pet") then
+            petTool = leftHand.Pet
+        end
+    end
+
+    -- If no pet is found, print and exit
+    if not petTool then
+        print("No pet is being held.")
+        return
+    end
+
+    -- Check if the pet tool/model has a Handle or PrimaryPart
+    local handle = petTool:FindFirstChild("Handle")
+    if not handle then
+        print("The pet tool doesn't have a Handle.")
+        return
+    end
+
+    -- Scale the pet (tool or model)
+    handle.Size = handle.Size * scale
+    handle.Position = handle.Position * 1.1  -- Adjust the position to avoid overlap
+
+    -- If it's a tool, update the tool's handle size
+    if petTool:IsA("Tool") then
+        petTool.Handle.Size = petTool.Handle.Size * scale
+    end
+
+    print("Pet enlarged!")
+end
+
+-- Connect the button click/tap event to enlarge the pet
+button.MouseButton1Click:Connect(enlargeHeldPet)
