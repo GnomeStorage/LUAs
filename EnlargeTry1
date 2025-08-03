@@ -1,0 +1,110 @@
+-- Fake "Grow a Garden" Pet Enlargement Script
+-- Inspired by GER COMMANDO/CHROLINKZHUB.DEV visuals
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+-- Fake command handler
+local function handleEnlargeCommand(player, petName)
+    -- Check if player has the pet
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    
+    -- Find nearby pets
+    for _, child in pairs(workspace:GetChildren()) do
+        if child:FindFirstChild("IsPet") and child.Name == petName then
+            -- Fake visual effects
+            local glow = Instance.new("Part")
+            glow.Size = Vector3.new(5, 5, 5)
+            glow.Position = child:GetPivot().Position
+            glow.Anchored = true
+            glow.CanCollide = false
+            glow.Material = Enum.Material.Neon
+            glow.Color = Color3.fromRGB(0, 255, 255) -- Light magic blue
+            glow.Shape = Enum.PartType.Ball
+            glow.Parent = workspace
+            
+            -- Fake particle effect
+            local particles = Instance.new("ParticleEmitter")
+            particles.Texture = "rbxassetid://242806287" -- Sparkle texture
+            particles.LightEmission = 1
+            particles.Parent = glow
+            
+            -- Tween for enlargement effect
+            local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quint)
+            local scaleTween = TweenService:Create(
+                child,
+                tweenInfo,
+                {Size = child.Size * 1.5} -- 50% larger
+            )
+            
+            -- Fake "EDS" effect (from your second image)
+            local edsTag = Instance.new("BillboardGui")
+            edsTag.Size = UDim2.new(4, 0, 4, 0)
+            edsTag.StudsOffset = Vector3.new(0, 3, 0)
+            edsTag.Adornee = child
+            edsTag.Parent = child
+            
+            local edsText = Instance.new("TextLabel")
+            edsText.Text = "EDS\nENLARGED"
+            edsText.Size = UDim2.new(1, 0, 1, 0)
+            edsText.BackgroundTransparency = 1
+            edsText.TextColor3 = Color3.new(1, 1, 1)
+            edsText.Font = Enum.Font.SciFi
+            edsText.TextScaled = true
+            edsText.Parent = edsTag
+            
+            scaleTween:Play()
+            
+            -- Cleanup after effect
+            delay(5, function()
+                glow:Destroy()
+            end)
+            
+            return true
+        end
+    end
+    return false
+end
+
+-- Fake chat command (like in your images)
+Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(message)
+        if message:lower():sub(1, 8) == "enlarge " then
+            local petName = message:sub(9)
+            local success = handleEnlargeCommand(player, petName)
+            
+            if success then
+                -- Fake notification
+                local notification = Instance.new("BillboardGui")
+                notification.Size = UDim2.new(10, 0, 2, 0)
+                notification.StudsOffset = Vector3.new(0, 5, 0)
+                notification.Adornee = player.Character:WaitForChild("HumanoidRootPart")
+                notification.Parent = player.Character.HumanoidRootPart
+                
+                local label = Instance.new("TextLabel")
+                label.Text = "GER COMMANDO ACTIVATED!\n"..petName.." ENLARGED!"
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(0, 1, 1)
+                label.Font = Enum.Font.SciFi
+                label.TextScaled = true
+                label.Parent = notification
+                
+                delay(3, function()
+                    notification:Destroy()
+                end)
+            end
+        end
+    end)
+end)
+
+-- Fake remote event (to simulate backend functionality)
+local fakeRemote = Instance.new("RemoteEvent")
+fakeRemote.Name = "LightMagicOverCommando" -- Reference from your image
+fakeRemote.Parent = ReplicatedStorage
+
+print("Fake Grow a Garden enlargement system loaded")
+print("CHROLINKZHUB.DEV inspired system active") -- Reference from your image
+print("Light magic OVER COMMANDO protocol initiated") -- Reference from your image
