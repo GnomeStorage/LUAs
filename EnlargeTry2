@@ -1,34 +1,50 @@
--- Delta Executor Compatible: Simple Enlarge Pets Script
+-- Delta Executor Compatible: Enlarge Held Pet Script
 
-local scale = 3  -- Scaling factor for enlarging the pets
+local scale = 3  -- Scaling factor for enlarging the pet
 
--- Look for pets in the workspace or player's character
-local petFolder = workspace:FindFirstChild("Pets") or game.Players.LocalPlayer.Character:FindFirstChild("Pets") or game.Players.LocalPlayer.Character
+-- Find the player's character
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
-if not petFolder then
-    print("No pets found in workspace or character.")
+-- Check if the character has a "RightHand" or "LeftHand" attachment for pets
+local rightHand = character:FindFirstChild("RightHand")
+local leftHand = character:FindFirstChild("LeftHand")
+
+-- Determine if the player is holding a pet
+local heldPet = nil
+
+-- Check if the pet is in the RightHand or LeftHand
+if rightHand and rightHand:FindFirstChild("Pet") then
+    heldPet = rightHand.Pet
+elseif leftHand and leftHand:FindFirstChild("Pet") then
+    heldPet = leftHand.Pet
+end
+
+if not heldPet then
+    print("No pet is being held.")
     return
 end
 
--- Iterate over each pet model and scale its parts
-for _, model in ipairs(petFolder:GetChildren()) do
-    if model:IsA("Model") then
-        -- Ensure the model has a PrimaryPart for proper scaling
-        if model.PrimaryPart then
-            -- Scale each part within the model
-            for _, part in ipairs(model:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Size = part.Size * scale
-                    -- Ensure position is updated as well to prevent clipping
-                    part.Position = part.Position * 1.1  -- Move slightly to avoid overlap
-                elseif part:IsA("SpecialMesh") then
-                    part.Scale = part.Scale * scale
-                end
+-- Scale the held pet
+if heldPet:IsA("Model") then
+    -- Ensure the pet has a PrimaryPart for proper scaling
+    if heldPet.PrimaryPart then
+        -- Scale each part of the model
+        for _, part in ipairs(heldPet:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Size = part.Size * scale
+                -- Adjust the position slightly to avoid clipping
+                part.Position = part.Position * 1.1
+            elseif part:IsA("SpecialMesh") then
+                part.Scale = part.Scale * scale
             end
-            -- Optionally, update the PrimaryPart's CFrame for the model
-            model:SetPrimaryPartCFrame(model.PrimaryPart.CFrame)
-        else
-            warn("Pet model doesn't have a PrimaryPart.")
         end
+        -- Optionally, update the PrimaryPart's CFrame
+        heldPet:SetPrimaryPartCFrame(heldPet.PrimaryPart.CFrame)
+        print("Pet enlarged!")
+    else
+        print("Held pet does not have a PrimaryPart.")
     end
+else
+    print("Held item is not a pet model.")
 end
