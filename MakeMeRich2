@@ -1,17 +1,22 @@
+-- First, ensure we are adding money to a visible TextLabel in your GUI.
+
 -- Function to add money (shekels) visually
 local function addMoney()
+    -- Get the local player
     local player = game.Players.LocalPlayer
     
-    -- Make sure there's a ScreenGui and MoneyLabel in the PlayerGui
-    local screenGui = player.PlayerGui:WaitForChild("ScreenGui")  -- Ensure you have a ScreenGui in your PlayerGui
-    local moneyLabel = screenGui:WaitForChild("MoneyLabel")  -- Replace with the actual name of your money label
+    -- Find the ScreenGui and MoneyLabel in the PlayerGui
+    local screenGui = player.PlayerGui:WaitForChild("ScreenGui")  -- Make sure you have a ScreenGui
+    local moneyLabel = screenGui:WaitForChild("MoneyLabel")  -- Ensure the label is named "MoneyLabel"
 
-    -- Get the current value of the money from the TextLabel and add 1 quadrillion
+    -- Get the current value from the displayed label and add 1 quadrillion
     local currentMoney = tonumber(moneyLabel.Text:match("([%,0-9]+)")) or 0
-    local newMoney = currentMoney + 1000000000000000  -- Add 1 quadrillion to the current value
+    
+    -- Add 1 quadrillion (1,000,000,000,000,000)
+    local newMoney = currentMoney + 1000000000000000
 
-    -- Update the TextLabel to show the new value
-    moneyLabel.Text = string.format("%0.0f", newMoney):gsub("(%d)(%d%d%d)", "%1,%2") .. "¢"  -- Format with commas and add currency symbol
+    -- Update the TextLabel to show the new value (formatted with commas)
+    moneyLabel.Text = string.format("%0.0f", newMoney):gsub("(%d)(%d%d%d)", "%1,%2") .. "¢"
 end
 
 -- Create the button
@@ -19,7 +24,7 @@ local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 200, 0, 50)
 button.Position = UDim2.new(0.5, -100, 0.8, 0)
 button.Text = "MAKE ME RICH"
-button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Make sure you have a ScreenGui set up for this
+button.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")  -- Make sure ScreenGui exists
 
 -- When the button is clicked, call the addMoney function
 button.MouseButton1Click:Connect(addMoney)
