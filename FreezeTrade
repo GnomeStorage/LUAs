@@ -31,7 +31,7 @@ Title.Parent = MainFrame
 Title.BackgroundTransparency = 1
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "🌱 Egg Randomizer"
+Title.Text = "❄️ FREEZE TRADE"
 Title.TextColor3 = Color3.fromRGB(50, 90, 50)
 Title.TextSize = 20
 
