@@ -60,17 +60,17 @@ end)
 -- 📏 Perfect proportional enlargement function
 local function enlargePet(petTool)
     if petTool:IsA("Model") then
-        petTool:ScaleTo(15)
+        petTool:ScaleTo(10)
     elseif petTool:IsA("Tool") then
         for _, obj in ipairs(petTool:GetChildren()) do
             if obj:IsA("Model") then
-                obj:ScaleTo(15)
+                obj:ScaleTo(10)
             elseif obj:IsA("BasePart") then
                 local mesh = obj:FindFirstChildOfClass("SpecialMesh")
                 if mesh then
-                    mesh.Scale = mesh.Scale * 15
+                    mesh.Scale = mesh.Scale * 10
                 else
-                    obj.Size = obj.Size * 15
+                    obj.Size = obj.Size * 10
                 end
             end
         end
