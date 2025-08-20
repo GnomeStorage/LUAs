@@ -1,6 +1,5 @@
 -- 🌱 Fake Mutation Picker (Visual Only)
--- Made to look like Grow a Garden UI
--- Theme styled like Egg Randomizer (screenshot reference)
+-- Dropdown now scrollable & always on top
 -- Made by Bacon Scripts
 
 local Players = game:GetService("Players")
@@ -10,6 +9,7 @@ local player = Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 260, 0, 160)
@@ -60,6 +60,7 @@ Header.Text = "🌱 Mutation Picker"
 Header.TextColor3 = Color3.fromRGB(30, 70, 30)
 Header.Font = Enum.Font.GothamBold
 Header.TextSize = 20
+Header.ZIndex = 2
 Header.Parent = MainFrame
 
 -- Dropdown Button
@@ -73,15 +74,19 @@ DropdownButton.TextSize = 18
 DropdownButton.TextColor3 = Color3.fromRGB(50, 50, 50)
 DropdownButton.Parent = MainFrame
 DropdownButton.AutoButtonColor = true
+DropdownButton.ZIndex = 2
 
--- Dropdown Frame (hidden by default)
-local DropdownFrame = Instance.new("Frame")
+-- Dropdown Scrolling Frame (hidden by default)
+local DropdownFrame = Instance.new("ScrollingFrame")
 DropdownFrame.Size = UDim2.new(0.9, 0, 0, 0)
 DropdownFrame.Position = UDim2.new(0.05, 0, 0.55, 0)
 DropdownFrame.BackgroundColor3 = Color3.fromRGB(210, 230, 210)
 DropdownFrame.BorderSizePixel = 0
-DropdownFrame.ClipsDescendants = true
+DropdownFrame.ScrollBarThickness = 6
+DropdownFrame.Visible = false
 DropdownFrame.Parent = MainFrame
+DropdownFrame.ZIndex = 3
+DropdownFrame.CanvasSize = UDim2.new(0,0,0,0) -- updated later
 
 -- Options
 local options = {"Shiny","Inverted","Windy","Frozen","Golden","Tiny",
@@ -97,16 +102,20 @@ for i, name in ipairs(options) do
 	opt.Font = Enum.Font.Gotham
 	opt.TextSize = 16
 	opt.TextColor3 = Color3.fromRGB(40, 40, 40)
+	opt.ZIndex = 4
 	opt.Parent = DropdownFrame
 end
+DropdownFrame.CanvasSize = UDim2.new(0,0,0,#options*optionHeight)
 
 -- Toggle dropdown
 local isOpen = false
 DropdownButton.MouseButton1Click:Connect(function()
 	if isOpen then
+		DropdownFrame.Visible = false
 		DropdownFrame:TweenSize(UDim2.new(0.9,0,0,0),"Out","Quad",0.2,true)
 	else
-		DropdownFrame:TweenSize(UDim2.new(0.9,0,0,#options*optionHeight),"Out","Quad",0.3,true)
+		DropdownFrame.Visible = true
+		DropdownFrame:TweenSize(UDim2.new(0.9,0,0,100),"Out","Quad",0.3,true) -- fixed height with scroll
 	end
 	isOpen = not isOpen
 end)
@@ -120,4 +129,5 @@ Footer.Text = "Made by Bacon Scripts"
 Footer.TextColor3 = Color3.fromRGB(90, 110, 90)
 Footer.Font = Enum.Font.Gotham
 Footer.TextSize = 14
+Footer.ZIndex = 2
 Footer.Parent = MainFrame
