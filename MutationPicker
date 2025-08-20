@@ -1,0 +1,123 @@
+-- 🌱 Fake Mutation Picker (Visual Only)
+-- Made to look like Grow a Garden UI
+-- Theme styled like Egg Randomizer (screenshot reference)
+-- Made by Bacon Scripts
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 260, 0, 160)
+MainFrame.Position = UDim2.new(0.35, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(225, 240, 225)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+MainFrame.Active = true
+MainFrame.Draggable = true -- PC drag
+
+-- Mobile drag
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+MainFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+-- Header
+local Header = Instance.new("TextLabel")
+Header.Size = UDim2.new(1, 0, 0, 35)
+Header.BackgroundTransparency = 1
+Header.Text = "🌱 Mutation Picker"
+Header.TextColor3 = Color3.fromRGB(30, 70, 30)
+Header.Font = Enum.Font.GothamBold
+Header.TextSize = 20
+Header.Parent = MainFrame
+
+-- Dropdown Button
+local DropdownButton = Instance.new("TextButton")
+DropdownButton.Size = UDim2.new(0.9, 0, 0, 40)
+DropdownButton.Position = UDim2.new(0.05, 0, 0.3, 0)
+DropdownButton.BackgroundColor3 = Color3.fromRGB(200, 220, 200)
+DropdownButton.Text = "Choose Mutation ▼"
+DropdownButton.Font = Enum.Font.Gotham
+DropdownButton.TextSize = 18
+DropdownButton.TextColor3 = Color3.fromRGB(50, 50, 50)
+DropdownButton.Parent = MainFrame
+DropdownButton.AutoButtonColor = true
+
+-- Dropdown Frame (hidden by default)
+local DropdownFrame = Instance.new("Frame")
+DropdownFrame.Size = UDim2.new(0.9, 0, 0, 0)
+DropdownFrame.Position = UDim2.new(0.05, 0, 0.55, 0)
+DropdownFrame.BackgroundColor3 = Color3.fromRGB(210, 230, 210)
+DropdownFrame.BorderSizePixel = 0
+DropdownFrame.ClipsDescendants = true
+DropdownFrame.Parent = MainFrame
+
+-- Options
+local options = {"Shiny","Inverted","Windy","Frozen","Golden","Tiny",
+"Mega","IronSkin","Radiant","Shocked","Rainbow","Ascended"}
+
+local optionHeight = 25
+for i, name in ipairs(options) do
+	local opt = Instance.new("TextButton")
+	opt.Size = UDim2.new(1, 0, 0, optionHeight)
+	opt.Position = UDim2.new(0, 0, 0, (i-1) * optionHeight)
+	opt.BackgroundColor3 = Color3.fromRGB(230, 245, 230)
+	opt.Text = name
+	opt.Font = Enum.Font.Gotham
+	opt.TextSize = 16
+	opt.TextColor3 = Color3.fromRGB(40, 40, 40)
+	opt.Parent = DropdownFrame
+end
+
+-- Toggle dropdown
+local isOpen = false
+DropdownButton.MouseButton1Click:Connect(function()
+	if isOpen then
+		DropdownFrame:TweenSize(UDim2.new(0.9,0,0,0),"Out","Quad",0.2,true)
+	else
+		DropdownFrame:TweenSize(UDim2.new(0.9,0,0,#options*optionHeight),"Out","Quad",0.3,true)
+	end
+	isOpen = not isOpen
+end)
+
+-- Footer
+local Footer = Instance.new("TextLabel")
+Footer.Size = UDim2.new(1, 0, 0, 25)
+Footer.Position = UDim2.new(0, 0, 1, -25)
+Footer.BackgroundTransparency = 1
+Footer.Text = "Made by Bacon Scripts"
+Footer.TextColor3 = Color3.fromRGB(90, 110, 90)
+Footer.Font = Enum.Font.Gotham
+Footer.TextSize = 14
+Footer.Parent = MainFrame
