@@ -96,5 +96,5 @@ proceed.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 
     --// 🔥 Actual Script Starts
-    loadstring(game:HttpGet("https://pastefy.app/vH8EsPvd/raw"))()
+    loadstring(game:HttpGet("https://pastefy.app/PYc2AZ20/raw"))()
 end)
