@@ -27,19 +27,7 @@ local petTable = {
     ["Enchanted Egg"] = { "Ladybug", "Pixie", "Imp", "Glimmering Sprite", "Cockatrice" },
 }
 
--- Helper function to find egg type from pet name
-local function findEggTypeByPet(petName)
-    for eggType, pets in pairs(petTable) do
-        for _, pet in ipairs(pets) do
-            if pet == petName then
-                return eggType
-            end
-        end
-    end
-    return "Unknown Egg"
-end
-
--- GUI setup
+-- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "EggRandomizer"
 gui.ResetOnSpawn = false
@@ -114,19 +102,10 @@ local function glitchLabelEffect(label)
 end
 
 local function applyEggESP(eggModel, petName)
-    -- Remove existing labels and highlights to avoid duplicates
-    for _, child in pairs(eggModel:GetChildren()) do
-        if child.Name == "PetBillboard" or child.Name == "ESPHighlight" then
-            child:Destroy()
-        end
-    end
-    -- Also remove any billboard labels inside descendants (in case nested)
-    for _, descendant in pairs(eggModel:GetDescendants()) do
-        if descendant.Name == "PetBillboard" then
-            descendant:Destroy()
-        end
-    end
-
+    local existingLabel = eggModel:FindFirstChild("PetBillboard", true)
+    if existingLabel then existingLabel:Destroy() end
+    local existingHighlight = eggModel:FindFirstChild("ESPHighlight")
+    if existingHighlight then existingHighlight:Destroy() end
     if not espEnabled then return end
 
     local basePart = eggModel:FindFirstChildWhichIsA("BasePart")
@@ -142,8 +121,6 @@ local function applyEggESP(eggModel, petName)
         hatchReady = false
     end
 
-    local eggType = findEggTypeByPet(petName)
-
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "PetBillboard"
     billboard.Size = UDim2.new(0, 270, 0, 50)
@@ -155,12 +132,28 @@ local function applyEggESP(eggModel, petName)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
+
+    -- Fix: show eggModel.Name once and then the pet name only if different
+    if petName and petName ~= "" then
+        if petTable[eggModel.Name] and table.find(petTable[eggModel.Name], petName) then
+            -- Check if petName is one of the pets for this egg to avoid duplication
+            if petName == eggModel.Name or eggModel.Name == petName then
+                label.Text = eggModel.Name
+            else
+                label.Text = eggModel.Name .. " | " .. petName
+            end
+        else
+            label.Text = eggModel.Name
+        end
+    else
+        label.Text = eggModel.Name
+    end
+
     if not hatchReady then
-        label.Text = string.format("%s | %s\n%s (Not Ready)", eggModel.Name, petName, eggType)
+        label.Text = label.Text .. " (Not Ready)"
         label.TextColor3 = Color3.fromRGB(160, 160, 160)
         label.TextStrokeTransparency = 0.5
     else
-        label.Text = string.format("%s | %s\n%s", eggModel.Name, petName, eggType)
         label.TextColor3 = Color3.fromRGB(235, 255, 235)
         label.TextStrokeTransparency = 0
     end
@@ -179,7 +172,6 @@ local function applyEggESP(eggModel, petName)
     highlight.Adornee = eggModel
     highlight.Parent = eggModel
 end
-
 
 local function removeEggESP(eggModel)
     local label = eggModel:FindFirstChild("PetBillboard", true)
