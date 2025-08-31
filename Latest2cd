@@ -114,11 +114,19 @@ local function glitchLabelEffect(label)
 end
 
 local function applyEggESP(eggModel, petName)
-    -- Remove any existing label or highlight to avoid duplicates
-    local existingLabel = eggModel:FindFirstChild("PetBillboard", true)
-    if existingLabel then existingLabel:Destroy() end
-    local existingHighlight = eggModel:FindFirstChild("ESPHighlight")
-    if existingHighlight then existingHighlight:Destroy() end
+    -- Remove existing labels and highlights to avoid duplicates
+    for _, child in pairs(eggModel:GetChildren()) do
+        if child.Name == "PetBillboard" or child.Name == "ESPHighlight" then
+            child:Destroy()
+        end
+    end
+    -- Also remove any billboard labels inside descendants (in case nested)
+    for _, descendant in pairs(eggModel:GetDescendants()) do
+        if descendant.Name == "PetBillboard" then
+            descendant:Destroy()
+        end
+    end
+
     if not espEnabled then return end
 
     local basePart = eggModel:FindFirstChildWhichIsA("BasePart")
@@ -147,7 +155,6 @@ local function applyEggESP(eggModel, petName)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
-    -- Show egg name, pet name, and correct egg type based on pet
     if not hatchReady then
         label.Text = string.format("%s | %s\n%s (Not Ready)", eggModel.Name, petName, eggType)
         label.TextColor3 = Color3.fromRGB(160, 160, 160)
@@ -172,6 +179,7 @@ local function applyEggESP(eggModel, petName)
     highlight.Adornee = eggModel
     highlight.Parent = eggModel
 end
+
 
 local function removeEggESP(eggModel)
     local label = eggModel:FindFirstChild("PetBillboard", true)
