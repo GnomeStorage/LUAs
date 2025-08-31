@@ -27,7 +27,7 @@ local petTable = {
     ["Enchanted Egg"] = { "Ladybug", "Pixie", "Imp", "Glimmering Sprite", "Cockatrice" },
 }
 
--- Helper: get egg type by pet name
+-- Helper function to find egg type from pet name
 local function findEggTypeByPet(petName)
     for eggType, pets in pairs(petTable) do
         for _, pet in ipairs(pets) do
@@ -39,8 +39,7 @@ local function findEggTypeByPet(petName)
     return "Unknown Egg"
 end
 
--- GUI setup (same as your original)
--- GUI
+-- GUI setup
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "EggRandomizer"
 gui.ResetOnSpawn = false
@@ -114,23 +113,8 @@ local function glitchLabelEffect(label)
     end)()
 end
 
--- Map of egg model -> true pet name
-local espEnabled = true
-local truePetMap = {}
-
-local function glitchLabelEffect(label)
-    coroutine.wrap(function()
-        local original = label.TextColor3
-        for i = 1, 2 do
-            label.TextColor3 = Color3.new(1, 0, 0)
-            wait(0.07)
-            label.TextColor3 = original
-            wait(0.07)
-        end
-    end)()
-end
-
 local function applyEggESP(eggModel, petName)
+    -- Remove any existing label or highlight to avoid duplicates
     local existingLabel = eggModel:FindFirstChild("PetBillboard", true)
     if existingLabel then existingLabel:Destroy() end
     local existingHighlight = eggModel:FindFirstChild("ESPHighlight")
@@ -150,6 +134,8 @@ local function applyEggESP(eggModel, petName)
         hatchReady = false
     end
 
+    local eggType = findEggTypeByPet(petName)
+
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "PetBillboard"
     billboard.Size = UDim2.new(0, 270, 0, 50)
@@ -161,14 +147,13 @@ local function applyEggESP(eggModel, petName)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
-    local eggType = findEggTypeByPet(petName)
-
+    -- Show egg name, pet name, and correct egg type based on pet
     if not hatchReady then
-        label.Text = eggType .. " | " .. petName .. " (Not Ready)"
+        label.Text = string.format("%s | %s\n%s (Not Ready)", eggModel.Name, petName, eggType)
         label.TextColor3 = Color3.fromRGB(160, 160, 160)
         label.TextStrokeTransparency = 0.5
     else
-        label.Text = eggType .. " | " .. petName
+        label.Text = string.format("%s | %s\n%s", eggModel.Name, petName, eggType)
         label.TextColor3 = Color3.fromRGB(235, 255, 235)
         label.TextStrokeTransparency = 0
     end
@@ -264,4 +249,3 @@ toggleESPBtn.MouseButton1Click:Connect(function()
         end
     end
 end)
--- The rest of your code (randomizer, toggle, GUI, etc.) stays exactly the same.
