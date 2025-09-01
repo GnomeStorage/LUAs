@@ -8,7 +8,6 @@ local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 local petTable = {
-    ["Common Egg"] = { "Dog", "Bunny", "Golden Lab" },
     ["Uncommon Egg"] = { "Chicken", "Black Bunny", "Cat", "Deer" },
     ["Rare Egg"] = { "Pig", "Monkey", "Rooster", "Orange Tabby", "Spotted Deer" },
     ["Legendary Egg"] = { "Cow", "Polar Bear", "Sea Otter", "Turtle", "Silver Monkey" },
@@ -26,7 +25,6 @@ local petTable = {
     ["Sprout Egg"] = { "Dairy Cow", "Jackalope", "Sapling" },
     ["Enchanted Egg"] = { "Ladybug", "Pixie", "Imp", "Glimmering Sprite", "Cockatrice" },
 }
-
 -- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "EggRandomizer"
@@ -132,23 +130,15 @@ local function applyEggESP(eggModel, petName)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
-
-    -- Fix: only show egg name once; add pet name if different
-    local displayText = eggModel.Name
-    if petName and petName ~= "" and petName ~= eggModel.Name then
-        displayText = eggModel.Name .. " | " .. petName
-    end
-    label.Text = displayText
-
+    label.Text = eggModel.Name .. " | " .. petName
     if not hatchReady then
-        label.Text = label.Text .. " (Not Ready)"
+        label.Text = eggModel.Name .. " | " .. petName .. " (Not Ready)"
         label.TextColor3 = Color3.fromRGB(160, 160, 160)
         label.TextStrokeTransparency = 0.5
     else
         label.TextColor3 = Color3.fromRGB(235, 255, 235)
         label.TextStrokeTransparency = 0
     end
-
     label.TextScaled = true
     label.Font = Enum.Font.FredokaOne
     label.Parent = billboard
