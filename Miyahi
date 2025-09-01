@@ -133,21 +133,12 @@ local function applyEggESP(eggModel, petName)
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
 
-    -- Fix: show eggModel.Name once and then the pet name only if different
-    if petName and petName ~= "" then
-        if petTable[eggModel.Name] and table.find(petTable[eggModel.Name], petName) then
-            -- Check if petName is one of the pets for this egg to avoid duplication
-            if petName == eggModel.Name or eggModel.Name == petName then
-                label.Text = eggModel.Name
-            else
-                label.Text = eggModel.Name .. " | " .. petName
-            end
-        else
-            label.Text = eggModel.Name
-        end
-    else
-        label.Text = eggModel.Name
+    -- Fix: only show egg name once; add pet name if different
+    local displayText = eggModel.Name
+    if petName and petName ~= "" and petName ~= eggModel.Name then
+        displayText = eggModel.Name .. " | " .. petName
     end
+    label.Text = displayText
 
     if not hatchReady then
         label.Text = label.Text .. " (Not Ready)"
@@ -157,6 +148,7 @@ local function applyEggESP(eggModel, petName)
         label.TextColor3 = Color3.fromRGB(235, 255, 235)
         label.TextStrokeTransparency = 0
     end
+
     label.TextScaled = true
     label.Font = Enum.Font.FredokaOne
     label.Parent = billboard
