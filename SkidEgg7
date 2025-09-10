@@ -128,29 +128,27 @@ local function applyEggESP(eggModel, petName)
     billboard.MaxDistance = 500
     billboard.Parent = basePart
 
-    -- First line: Egg name (white)
+    -- Egg Name Label (Top)
     local eggLabel = Instance.new("TextLabel")
-    eggLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    eggLabel.Position = UDim2.new(0, 0, 0, 0)
+    eggLabel.Size = UDim2.new(1, 0, 0.5, 0) -- top half
     eggLabel.BackgroundTransparency = 1
-    eggLabel.Text = eggModel.Name
-    eggLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- white
+    eggLabel.Text = string.upper(eggModel.Name) -- ALL CAPS
+    eggLabel.TextColor3 = Color3.fromRGB(235, 255, 235)
     eggLabel.TextStrokeTransparency = 0
     eggLabel.TextScaled = true
-    eggLabel.Font = Enum.Font.FredokaOne
+    eggLabel.Font = Enum.Font.GothamBold -- modern, clean
     eggLabel.Parent = billboard
 
-    -- Second line: Pet name (red when ready, gray when not ready)
+    -- Pet Name Label (Below Egg Name)
     local petLabel = Instance.new("TextLabel")
-    petLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    petLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    petLabel.Size = UDim2.new(1, 0, 0.4, 0) -- smaller than egg
+    petLabel.Position = UDim2.new(0, 0, 0.5, 0) -- below egg label
     petLabel.BackgroundTransparency = 1
     petLabel.Text = petName
-    petLabel.TextScaled = true
-    petLabel.Font = Enum.Font.FredokaOne
+    petLabel.TextColor3 = Color3.fromRGB(255, 50, 50) -- red pet name
     petLabel.TextStrokeTransparency = 0
-    petLabel.TextXAlignment = Enum.TextXAlignment.Center
-    petLabel.TextYAlignment = Enum.TextYAlignment.Center
+    petLabel.TextScaled = true
+    petLabel.Font = Enum.Font.GothamMedium -- modern, thinner than egg label
     petLabel.Parent = billboard
 
     if not hatchReady then
