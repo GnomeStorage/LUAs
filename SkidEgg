@@ -120,33 +120,40 @@ local function applyEggESP(eggModel, petName)
         hatchReady = false
     end
 
--- First line: Egg Name (NIGHT EGG)
-local eggLabel = Instance.new("TextLabel")
-eggLabel.Size = UDim2.new(1, 0, 0.4, 0)
-eggLabel.Position = UDim2.new(0, 0, 0, 0)
-eggLabel.BackgroundTransparency = 1
-eggLabel.Text = string.upper(eggModel.Name) -- NIGHT EGG
-eggLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- white
-eggLabel.TextStrokeTransparency = 0
-eggLabel.TextScaled = true
-eggLabel.Font = Enum.Font.SourceSansBold
-eggLabel.TextXAlignment = Enum.TextXAlignment.Center
-eggLabel.TextYAlignment = Enum.TextYAlignment.Center
-eggLabel.Parent = billboard
+ local billboard = Instance.new("BillboardGui")
+    billboard.Name = "PetBillboard"
+    billboard.Size = UDim2.new(0, 270, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 4.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = 500
+    billboard.Parent = basePart
 
--- Second line: Pet Name (Raccoon)
-local petLabel = Instance.new("TextLabel")
-petLabel.Size = UDim2.new(1, 0, 0.3, 0)
-petLabel.Position = UDim2.new(0, 0, 0.4, 0)
-petLabel.BackgroundTransparency = 1
-petLabel.Text = petName
-petLabel.TextColor3 = Color3.fromRGB(50, 205, 50) -- bright green
-petLabel.TextStrokeTransparency = 0
-petLabel.TextScaled = true
-petLabel.Font = Enum.Font.SourceSansBold
-petLabel.TextXAlignment = Enum.TextXAlignment.Center
-petLabel.TextYAlignment = Enum.TextYAlignment.Center
-petLabel.Parent = billboard
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = eggModel.Name .. " | " .. petName
+    if not hatchReady then
+    label.Text = string.upper(eggModel.Name) .. "\n" .. petName .. " (Not Ready)"
+    label.TextColor3 = Color3.fromRGB(160, 160, 160)
+    label.TextStrokeTransparency = 0.5
+else
+    label.TextColor3 = Color3.fromRGB(235, 255, 235)
+    label.TextStrokeTransparency = 0
+end
+    label.TextScaled = true
+    label.Font = Enum.Font.FredokaOne
+    label.Parent = billboard
+
+    glitchLabelEffect(label)
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESPHighlight"
+    highlight.FillColor = Color3.fromRGB(255, 200, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.7
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Adornee = eggModel
+    highlight.Parent = eggModel
 end
 
 local function removeEggESP(eggModel)
