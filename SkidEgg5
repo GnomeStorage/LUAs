@@ -128,16 +128,17 @@ local function applyEggESP(eggModel, petName)
     billboard.MaxDistance = 500
     billboard.Parent = basePart
 
-   local label = Instance.new("TextLabel")
+    local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = eggModel.Name .. "\n" .. petName  -- 2 lines, safe
 
     if not hatchReady then
-        label.Text = "<font color='rgb(255,255,255)'>" .. eggModel.Name .. "</font>\n<font color='rgb(160,160,160)'>" .. petName .. " (Not Ready)</font>"
+        label.Text = eggModel.Name .. "\n" .. petName .. " (Not Ready)"
+        label.TextColor3 = Color3.fromRGB(160, 160, 160)
         label.TextStrokeTransparency = 0.5
     else
-        label.Text = "<font color='rgb(255,255,255)'>" .. eggModel.Name .. "</font>\n<font color='rgb(50,205,50)'>" .. petName .. "</font>"
+        label.TextColor3 = Color3.fromRGB(235, 255, 235)
         label.TextStrokeTransparency = 0
     end
     label.TextScaled = true
