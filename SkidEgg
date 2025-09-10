@@ -120,45 +120,33 @@ local function applyEggESP(eggModel, petName)
         hatchReady = false
     end
 
-   -- Billboard GUI for above egg
-local billboard = Instance.new("BillboardGui")
-billboard.Size = UDim2.new(0, 200, 0, 100)
-billboard.AlwaysOnTop = true
-billboard.Adornee = eggModel
-billboard.Parent = eggModel
+-- First line: Egg Name (NIGHT EGG)
+local eggLabel = Instance.new("TextLabel")
+eggLabel.Size = UDim2.new(1, 0, 0.4, 0)
+eggLabel.Position = UDim2.new(0, 0, 0, 0)
+eggLabel.BackgroundTransparency = 1
+eggLabel.Text = string.upper(eggModel.Name) -- NIGHT EGG
+eggLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- white
+eggLabel.TextStrokeTransparency = 0
+eggLabel.TextScaled = true
+eggLabel.Font = Enum.Font.SourceSansBold
+eggLabel.TextXAlignment = Enum.TextXAlignment.Center
+eggLabel.TextYAlignment = Enum.TextYAlignment.Center
+eggLabel.Parent = billboard
 
--- Top Label (Egg Type)
-local topLabel = Instance.new("TextLabel")
-topLabel.Size = UDim2.new(1, 0, 0.5, 0)
-topLabel.BackgroundTransparency = 1
-topLabel.Text = string.upper(eggModel.Name) -- Example: "NIGHT EGG"
-topLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-topLabel.TextStrokeTransparency = 0
-topLabel.TextScaled = true
-topLabel.Font = Enum.Font.FredokaOne
-topLabel.Parent = billboard
-
--- Bottom Label (Pet Name)
-local bottomLabel = Instance.new("TextLabel")
-bottomLabel.Position = UDim2.new(0, 0, 0.5, 0)
-bottomLabel.Size = UDim2.new(1, 0, 0.5, 0)
-bottomLabel.BackgroundTransparency = 1
-bottomLabel.Text = petName -- Example: "Raccoon"
-bottomLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-bottomLabel.TextStrokeTransparency = 0
-bottomLabel.TextScaled = true
-bottomLabel.Font = Enum.Font.FredokaOne
-bottomLabel.Parent = billboard
-
--- Optional: Highlight around egg
-local highlight = Instance.new("Highlight")
-highlight.Name = "ESPHighlight"
-highlight.FillColor = Color3.fromRGB(255, 200, 0)
-highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-highlight.FillTransparency = 0.7
-highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-highlight.Adornee = eggModel
-highlight.Parent = eggModel
+-- Second line: Pet Name (Raccoon)
+local petLabel = Instance.new("TextLabel")
+petLabel.Size = UDim2.new(1, 0, 0.3, 0)
+petLabel.Position = UDim2.new(0, 0, 0.4, 0)
+petLabel.BackgroundTransparency = 1
+petLabel.Text = petName
+petLabel.TextColor3 = Color3.fromRGB(50, 205, 50) -- bright green
+petLabel.TextStrokeTransparency = 0
+petLabel.TextScaled = true
+petLabel.Font = Enum.Font.SourceSansBold
+petLabel.TextXAlignment = Enum.TextXAlignment.Center
+petLabel.TextYAlignment = Enum.TextYAlignment.Center
+petLabel.Parent = billboard
 end
 
 local function removeEggESP(eggModel)
