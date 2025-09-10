@@ -132,13 +132,15 @@ local function applyEggESP(eggModel, petName)
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = string.upper(eggModel.Name) .. "\n" .. petName
-    if not hatchReady then
-        label.Text = string.upper(eggModel.Name) .. "\n" .. petName .. " (Not Ready)"
-        label.TextColor3 = Color3.fromRGB(160, 160, 160)
-        label.TextStrokeTransparency = 0.5
-    else
-        label.TextColor3 = Color3.fromRGB(235, 255, 235)
-        label.TextStrokeTransparency = 0
+
+if not hatchReady then
+    label.Text = string.upper(eggModel.Name) .. "\n" .. petName .. " (Not Ready)"
+    label.TextColor3 = Color3.fromRGB(160, 160, 160)
+    label.TextStrokeTransparency = 0.5
+else
+    label.TextColor3 = Color3.fromRGB(235, 255, 235)
+    label.TextStrokeTransparency = 0
+end
     end
     label.TextScaled = true
     label.Font = Enum.Font.FredokaOne
