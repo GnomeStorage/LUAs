@@ -137,7 +137,7 @@ local function applyEggESP(eggModel, petName)
     eggLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- black outline
     eggLabel.TextStrokeTransparency = 0
     eggLabel.TextScaled = true
-    eggLabel.Font = Enum.Font.Arcade -- bold, retro look
+    eggLabel.Font = Enum.Font.FredokaOne -- bold, retro look
     eggLabel.Parent = billboard
 
     -- Pet Name Label (Below Egg Name)
@@ -150,7 +150,7 @@ local function applyEggESP(eggModel, petName)
     petLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- black outline
     petLabel.TextStrokeTransparency = 0
     petLabel.TextScaled = true
-    petLabel.Font = Enum.Font.Arcade -- same font for consistency
+    petLabel.Font = Enum.Font.FredokaOne -- same font for consistency
     petLabel.Parent = billboard
 
     if not hatchReady then
