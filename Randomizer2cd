@@ -25,6 +25,7 @@ local petTable = {
     ["Gourmet Egg"] = { "Bagel Bunny", "Pancake Mole", "Sushi Bear", "Spaghetti Sloth" },
     ["Sprout Egg"] = { "Dairy Cow", "Jackalope", "Sapling" },
     ["Enchanted Egg"] = { "Ladybug", "Pixie", "Imp", "Glimmering Sprite", "Cockatrice" },
+    ["Fall Egg"] = { "Robin", "Badger", "Barn Owl", "Swan" },
 }
 -- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
